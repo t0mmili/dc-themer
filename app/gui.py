@@ -1,6 +1,6 @@
 import tkinter as tk
 import webbrowser
-from config import APP_AUTHOR, APP_NAME, APP_VERSION, DC_CONFIG_PATH, DEV_YEARS, REPO_URL, SCHEME_EXTENSION, SCHEME_PATH, SCHEME_TAGS
+from config import APP_AUTHOR, APP_NAME, APP_VERSION, DC_CONFIG_PATHS, DEV_YEARS, REPO_URL, SCHEME_EXTENSIONS, SCHEME_PATH, XML_TAGS
 from tkinter import ttk
 from tkinter.messagebox import showerror, showinfo
 from utils import Scheme
@@ -37,8 +37,8 @@ class AppFrame(ttk.Frame):
 
         # Scheme Selector
         scheme_path = SCHEME_PATH
-        scheme_ext = SCHEME_EXTENSION
-        schemes = Scheme.list_schemes(scheme_path, scheme_ext)
+        scheme_exts = SCHEME_EXTENSIONS
+        schemes = Scheme.list_schemes(scheme_path, scheme_exts)
         self.scheme_var = tk.StringVar(self)
 
         self.scheme_selector = ttk.OptionMenu(self, self.scheme_var, schemes[0], *schemes)
@@ -54,13 +54,14 @@ class AppFrame(ttk.Frame):
 
     def modify_scheme(self):
         try:
-            dc_config = DC_CONFIG_PATH
-            scheme = self.scheme_var.get()
+            dc_configs = DC_CONFIG_PATHS
+            scheme_name = self.scheme_var.get()
             scheme_path = SCHEME_PATH
-            tags = SCHEME_TAGS
-            Scheme.apply_scheme(scheme, scheme_path, dc_config, tags)
-            showinfo(title='Info', message=f'Scheme \'{scheme}\' applied successfully.')
-        except FileNotFoundError as e:
-            showerror(title='Error', message=str(e))
+            xml_tags = XML_TAGS
+
+            scheme = Scheme(scheme_name, scheme_path, dc_configs, xml_tags)
+            scheme.apply_scheme()
+
+            showinfo(title='Info', message=f'Scheme \'{scheme_name}\' applied successfully.')
         except Exception as e:
-            showerror(title='Error', message=f'An error occurred:\n{str(e)}')
+            showerror(title='Error', message=f'Exception:\n{str(e)}')

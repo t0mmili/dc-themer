@@ -9,9 +9,13 @@ REPO_URL = 'https://github.com/t0mmili/dc-themer'
 ICON_PATH = './assets/dct-icon-v3.ico'
 
 # Application config
-DC_CONFIG_PATH = '%APPDATA%\\doublecmd'
-SCHEME_EXTENSION = 'xml'
+DC_CONFIG_PATHS = {
+    'cfg': '%APPDATA%\\doublecmd\\doublecmd.cfg',
+    'json': '%APPDATA%\\doublecmd\\color.json',
+    'xml': '%APPDATA%\\doublecmd\\doublecmd.xml'
+}
+SCHEME_EXTENSIONS = ['cfg','json','xml']
 SCHEME_PATH = './schemes'
-SCHEME_TAGS = ['Colors','Fonts']
 WINDOW_HEIGHT = 115
 WINDOW_WIDTH = 285
+XML_TAGS = ['Colors','Fonts']
