@@ -1,9 +1,10 @@
 import tkinter as tk
 import webbrowser
 from config import APP_AUTHOR, APP_NAME, APP_VERSION, DC_CONFIG_PATHS, DEV_YEARS, REPO_URL, SCHEME_EXTENSIONS, SCHEME_PATH, XML_TAGS
+from scheme import Scheme
 from tkinter import ttk
 from tkinter.messagebox import showerror, showinfo
-from utils import Scheme
+from utils import SchemeFileManager
 
 class AppMenuBar:
     def __init__(self, parent):
@@ -38,7 +39,7 @@ class AppFrame(ttk.Frame):
         # Scheme Selector
         scheme_path = SCHEME_PATH
         scheme_exts = SCHEME_EXTENSIONS
-        schemes = Scheme.list_schemes(scheme_path, scheme_exts)
+        schemes = SchemeFileManager.list_schemes(scheme_path, scheme_exts)
         self.scheme_var = tk.StringVar(self)
 
         self.scheme_selector = ttk.OptionMenu(self, self.scheme_var, schemes[0], *schemes)
@@ -64,4 +65,4 @@ class AppFrame(ttk.Frame):
 
             showinfo(title='Info', message=f'Scheme \'{scheme_name}\' applied successfully.')
         except Exception as e:
-            showerror(title='Error', message=f'Exception:\n{str(e)}')
+            showerror(title='Error', message=f'An unexpected error occurred:\n{str(e)}')

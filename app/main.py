@@ -7,14 +7,11 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        # Main Window size
-        window_width = WINDOW_WIDTH
-        window_height = WINDOW_HEIGHT
-
         icon_path = ICON_PATH
-        # This is needed for compilation with PyInstaller
+        # This is necessary for compilation with PyInstaller
         # icon_path = path.abspath(path.join(path.dirname(__file__), ICON_PATH))
 
+        # Set application window properties
         self.iconbitmap(icon_path)
         self.resizable(False, False)
         self.title(APP_NAME)
@@ -23,14 +20,15 @@ class App(tk.Tk):
         self.menu = AppMenuBar(self)
         self.config(menu=self.menu.menu_bar)
 
-        # Find screen center point
+        # Center the window on the screen
+        self.center_window(WINDOW_WIDTH, WINDOW_HEIGHT)
+
+    def center_window(self, width, height):
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
-        center_x = int(screen_width/2 - window_width/2)
-        center_y = int(screen_height/2 - window_height/2)
-
-        # Set Main Window geometry
-        self.geometry(f'{window_width}x{window_height}+{center_x}+{center_y}')
+        center_x = (screen_width - width) // 2
+        center_y = (screen_height - height) // 2
+        self.geometry(f'{width}x{height}+{center_x}+{center_y}')
 
 if __name__ == '__main__':
     app = App()
