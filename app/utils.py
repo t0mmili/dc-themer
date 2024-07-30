@@ -48,6 +48,9 @@ class Scheme:
                 target_config['Styles'][i] = source_config['Styles'][0]
                 break
 
+        # Replace the file colors
+        target_config['FileColors'] = source_config['FileColors']
+
         # Save modified DC json config file
         self.set_json(target_config, target_file)
 
