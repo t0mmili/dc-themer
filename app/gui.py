@@ -40,27 +40,33 @@ class AppFrame(ttk.Frame):
         scheme_path = SCHEME_PATH
         scheme_exts = SCHEME_EXTENSIONS
         schemes = SchemeFileManager.list_schemes(scheme_path, scheme_exts)
-        self.scheme_var = tk.StringVar(self)
 
+        self.scheme_var = tk.StringVar(self)
         self.scheme_selector = ttk.OptionMenu(self, self.scheme_var, schemes[0], *schemes)
         self.scheme_selector.grid(column=1, row=0, **options)
+
+        # Dark Mode checkbox
+        self.dark_mode_var = tk.BooleanVar(self)
+        self.dark_mode_tick = ttk.Checkbutton(self, text='Force auto Dark mode', variable=self.dark_mode_var, onvalue=True, offvalue=False, takefocus=False)
+        self.dark_mode_tick.grid(column=0, row=1, columnspan=2, sticky=tk.W, **options)
 
         # Apply Scheme button
         self.apply_button = ttk.Button(self, text='Apply')
         self.apply_button['command'] = self.modify_scheme
-        self.apply_button.grid(column=0, row=1, columnspan=2, sticky=tk.W, **options)
+        self.apply_button.grid(column=0, row=2, columnspan=2, sticky=tk.W, **options)
 
         # Add Frame options
         self.grid(padx=10, pady=10, sticky=tk.NSEW)
 
     def modify_scheme(self):
         try:
+            auto_dark_mode = self.dark_mode_var.get()
             dc_configs = DC_CONFIG_PATHS
             scheme_name = self.scheme_var.get()
             scheme_path = SCHEME_PATH
             xml_tags = XML_TAGS
 
-            scheme = Scheme(scheme_name, scheme_path, dc_configs, xml_tags)
+            scheme = Scheme(scheme_name, scheme_path, dc_configs, auto_dark_mode, xml_tags)
             scheme.apply_scheme()
 
             showinfo(title='Info', message=f'Scheme \'{scheme_name}\' applied successfully.')

@@ -4,10 +4,11 @@ from os import path
 from utils import DCFileManager, SchemeFileManager
 
 class Scheme:
-    def __init__(self, scheme, scheme_path, dc_configs, xml_tags):
+    def __init__(self, scheme, scheme_path, dc_configs, auto_dark_mode, xml_tags):
         self.scheme = scheme
         self.scheme_path = scheme_path
         self.dc_configs = dc_configs
+        self.auto_dark_mode = auto_dark_mode
         self.xml_tags = xml_tags
 
     def apply_scheme(self):
@@ -22,7 +23,7 @@ class Scheme:
         target_config = SchemeFileManager.get_cfg(target_file)
 
         # Set new 'DarkMode' value
-        target_config['DarkMode'] = source_config['DarkMode']
+        target_config['DarkMode'] = '1' if self.auto_dark_mode else source_config['DarkMode']
 
         # Backup current configuration
         DCFileManager.backup_config(target_file)

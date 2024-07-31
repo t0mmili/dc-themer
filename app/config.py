@@ -16,6 +16,6 @@ DC_CONFIG_PATHS = {
 }
 SCHEME_EXTENSIONS = ['cfg','json','xml']
 SCHEME_PATH = './schemes'
-WINDOW_HEIGHT = 115
+WINDOW_HEIGHT = 140
 WINDOW_WIDTH = 285
 XML_TAGS = ['Colors','Fonts']
