@@ -14,5 +14,5 @@ pipreqs --force ./app
 1. Edit **main.py** and uncomment `icon_path` variable.
 2. Run command:
    ```sh
-   pyinstaller --onefile --windowed --name=dc-themer --icon=./assets/dct-icon-v3.ico --add-data=./assets/dct-icon-v3.ico:assets ./app/main.py
+   pyinstaller --onefile --windowed --clean --name=dc-themer --icon=./assets/dct-icon-v3.ico --add-data=./assets/dct-icon-v3.ico:assets --upx-dir='C:\\Program Files\\upx' ./app/main.py
    ```
