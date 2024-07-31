@@ -29,19 +29,17 @@ class AppFrame(ttk.Frame):
     def __init__(self, container):
         super().__init__(container)
 
-        # Field options
+        self.setup_widgets()
+        self.grid(padx=10, pady=10, sticky=tk.NSEW)
+
+    def setup_widgets(self):
         options = {'padx': 5, 'pady': 5}
 
-        # Scheme Selector label
+        # Scheme selector
+        self.scheme_var = tk.StringVar(self)
+        schemes = SchemeFileManager.list_schemes(SCHEME_PATH, SCHEME_EXTENSIONS)
         self.scheme_selector_label = ttk.Label(self, text='Select scheme:')
         self.scheme_selector_label.grid(column=0, row=0, sticky=tk.W, **options)
-
-        # Scheme Selector
-        scheme_path = SCHEME_PATH
-        scheme_exts = SCHEME_EXTENSIONS
-        schemes = SchemeFileManager.list_schemes(scheme_path, scheme_exts)
-
-        self.scheme_var = tk.StringVar(self)
         self.scheme_selector = ttk.OptionMenu(self, self.scheme_var, schemes[0], *schemes)
         self.scheme_selector.grid(column=1, row=0, **options)
 
@@ -51,24 +49,13 @@ class AppFrame(ttk.Frame):
         self.dark_mode_tick.grid(column=0, row=1, columnspan=2, sticky=tk.W, **options)
 
         # Apply Scheme button
-        self.apply_button = ttk.Button(self, text='Apply')
-        self.apply_button['command'] = self.modify_scheme
+        self.apply_button = ttk.Button(self, text='Apply', command=self.modify_scheme)
         self.apply_button.grid(column=0, row=2, columnspan=2, sticky=tk.W, **options)
-
-        # Add Frame options
-        self.grid(padx=10, pady=10, sticky=tk.NSEW)
 
     def modify_scheme(self):
         try:
-            auto_dark_mode = self.dark_mode_var.get()
-            dc_configs = DC_CONFIG_PATHS
-            scheme_name = self.scheme_var.get()
-            scheme_path = SCHEME_PATH
-            xml_tags = XML_TAGS
-
-            scheme = Scheme(scheme_name, scheme_path, dc_configs, auto_dark_mode, xml_tags)
+            scheme = Scheme(self.scheme_var.get(), SCHEME_PATH, DC_CONFIG_PATHS, self.dark_mode_var.get(), XML_TAGS)
             scheme.apply_scheme()
-
-            showinfo(title='Info', message=f'Scheme \'{scheme_name}\' applied successfully.')
+            showinfo(title='Info', message=f'Scheme \'{self.scheme_var.get()}\' applied successfully.')
         except Exception as e:
             showerror(title='Error', message=f'An unexpected error occurred:\n{str(e)}')
