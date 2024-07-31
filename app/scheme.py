@@ -4,7 +4,44 @@ from os import path
 from utils import DCFileManager, SchemeFileManager
 
 class Scheme:
-    def __init__(self, scheme, scheme_path, dc_configs, auto_dark_mode, xml_tags):
+    """
+    A class to apply color schemes to configuration files.
+
+    Attributes:
+        scheme (str): The name of the scheme.
+        scheme_path (str): The file path where the scheme files are located.
+        dc_configs (dict): A dictionary containing DC configuration file types
+                           and their paths.
+        auto_dark_mode (bool): A flag to force auto dark mode if True.
+        xml_tags (list): A list of XML tags to be modified in XML configuration
+                         files.
+
+    Methods:
+        apply_scheme(): Applies the scheme to all configuration files
+                        (cfg, json, xml).
+        apply_scheme_cfg(): Applies the scheme specifically to the cfg
+                            configuration file.
+        apply_scheme_json(): Applies the scheme specifically to the json
+                             configuration file.
+        apply_scheme_xml(): Applies the scheme specifically to the xml
+                            configuration file.
+    """
+    def __init__(
+        self, scheme, scheme_path, dc_configs, auto_dark_mode, xml_tags
+    ):
+        """
+        Constructs all the necessary attributes for the Scheme object.
+
+        Args:
+            scheme (str): The name of the scheme.
+            scheme_path (str): The file path where the scheme files are
+                               located.
+            dc_configs (dict): A dictionary containing DC configuration file
+                               types and their paths.
+            auto_dark_mode (bool): A flag to force auto dark mode if True.
+            xml_tags (list): A list of XML tags to be modified in xml
+                             configuration files.
+        """
         self.scheme = scheme
         self.scheme_path = scheme_path
         self.dc_configs = dc_configs
@@ -12,18 +49,26 @@ class Scheme:
         self.xml_tags = xml_tags
 
     def apply_scheme(self):
+        """
+        Applies the scheme to all configuration files (cfg, json, xml).
+        """
         self.apply_scheme_cfg()
         self.apply_scheme_json()
         self.apply_scheme_xml()
 
     def apply_scheme_cfg(self):
+        """
+        Applies the scheme specifically to the cfg configuration file.
+        """
         source_file = path.join(self.scheme_path, f'{self.scheme}.cfg')
         target_file = DCFileManager.get_config(self.dc_configs['cfg'])
         source_config = SchemeFileManager.get_cfg(source_file)
         target_config = SchemeFileManager.get_cfg(target_file)
 
         # Set new 'DarkMode' value
-        target_config['DarkMode'] = '1' if self.auto_dark_mode else source_config['DarkMode']
+        target_config['DarkMode'] = (
+            '1' if self.auto_dark_mode else source_config['DarkMode']
+        )
 
         # Backup current configuration
         DCFileManager.backup_config(target_file)
@@ -32,6 +77,9 @@ class Scheme:
         SchemeFileManager.set_cfg(target_config, target_file)
 
     def apply_scheme_json(self):
+        """
+        Applies the scheme specifically to the json configuration file.
+        """
         source_file = path.join(self.scheme_path, f'{self.scheme}.json')
         target_file = DCFileManager.get_config(self.dc_configs['json'])
         source_config = SchemeFileManager.get_json(source_file)
@@ -53,6 +101,9 @@ class Scheme:
         SchemeFileManager.set_json(target_config, target_file)
 
     def apply_scheme_xml(self):
+        """
+        Applies the scheme specifically to the xml configuration file.
+        """
         source_file = path.join(self.scheme_path, f'{self.scheme}.xml')
         target_file = DCFileManager.get_config(self.dc_configs['xml'])
 
@@ -78,7 +129,9 @@ class Scheme:
             xml_str = tostring(target_root, encoding='utf-8')
             dom = parseString(xml_str)
             pretty_xml = dom.toprettyxml(indent='  ')
-            pretty_xml = '\n'.join([line for line in pretty_xml.split('\n') if line.strip()])
+            pretty_xml = '\n'.join(
+                [line for line in pretty_xml.split('\n') if line.strip()]
+            )
 
             # Save modified DC xml config file
             SchemeFileManager.set_xml(pretty_xml, target_file)

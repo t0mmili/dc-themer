@@ -4,7 +4,22 @@ from gui import AppFrame, AppMenuBar
 from os import path
 
 class App(tk.Tk):
+    """
+    The main application class that initializes and runs the tkinter GUI.
+
+    This class inherits from tkinter's Tk class and sets up the application
+    window, including setting the window icon, title, and size, and
+    initializing the menu bar and main application frame.
+
+    Methods:
+        center_window(width, height): Centers the window on the screen with
+                                      the given dimensions.
+    """
     def __init__(self):
+        """
+        Initializes the App class by setting up the main application window,
+        its properties, and the components.
+        """
         super().__init__()
 
         icon_path = ICON_PATH
@@ -24,6 +39,13 @@ class App(tk.Tk):
         self.center_window(WINDOW_WIDTH, WINDOW_HEIGHT)
 
     def center_window(self, width, height):
+        """
+        Centers the window on the screen using the specified width and height.
+
+        Args:
+            width (int): The width of the window.
+            height (int): The height of the window.
+        """
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         center_x = (screen_width - width) // 2
