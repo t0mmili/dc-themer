@@ -177,7 +177,12 @@ pyrightconfig.json
 
 # Application custom
 
-# Schemes used for development
+### Development ###
+
+# Schemes
 schemes/
+
+# User configuration
+dc-themer.json
 
 # End of Application custom

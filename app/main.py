@@ -1,7 +1,11 @@
 import tkinter as tk
-from config import APP_NAME, ICON_PATH, WINDOW_HEIGHT, WINDOW_WIDTH
+from config import (
+    APP_NAME, ICON_PATH, DEFAULT_USER_CONFIG, USER_CONFIG_PATH,
+    USER_CONFIG_VERSION, WINDOW_HEIGHT, WINDOW_WIDTH
+)
 from gui import AppFrame, AppMenuBar
 from os import path
+from user_config import UserConfigManager
 
 class App(tk.Tk):
     """
@@ -53,6 +57,12 @@ class App(tk.Tk):
         self.geometry(f'{width}x{height}+{center_x}+{center_y}')
 
 if __name__ == '__main__':
+    user_config_file = UserConfigManager(DEFAULT_USER_CONFIG, USER_CONFIG_PATH)
+    if not user_config_file.exists():
+        user_config_file.create_default()
+    user_config = user_config_file.get_config()
+    UserConfigManager.verify(USER_CONFIG_VERSION, user_config['configVersion'])
+
     app = App()
-    AppFrame(app)
+    AppFrame(app, user_config)
     app.mainloop()

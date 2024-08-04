@@ -1,9 +1,6 @@
 import tkinter as tk
 import webbrowser
-from config import (
-    APP_AUTHOR, APP_NAME, APP_VERSION, DC_CONFIG_PATHS, DEV_YEARS, REPO_URL,
-    SCHEME_EXTENSIONS, SCHEME_PATH, XML_TAGS
-)
+from config import APP_AUTHOR, APP_NAME, APP_VERSION, DEV_YEARS, REPO_URL
 from scheme import Scheme
 from tkinter import ttk
 from tkinter.messagebox import showerror, showinfo
@@ -53,6 +50,7 @@ class AppFrame(ttk.Frame):
     A class for the main application frame, containing UI elements.
 
     Attributes:
+        user_config (dict): Configuration settings for the application.
         scheme_var (StringVar): Variable to hold the selected scheme name.
         dark_mode_var (BooleanVar): Variable to store the state of
                                     the dark mode checkbox.
@@ -66,8 +64,9 @@ class AppFrame(ttk.Frame):
         container (Tk): The parent widget, typically an instance of Tk or
                         a top-level window.
     """
-    def __init__(self, container):
+    def __init__(self, container, user_config):
         super().__init__(container)
+        self.user_config = user_config
 
         self.setup_widgets()
         self.grid(padx=10, pady=10, sticky=tk.NSEW)
@@ -81,7 +80,8 @@ class AppFrame(ttk.Frame):
         # Scheme selector
         self.scheme_var = tk.StringVar(self)
         schemes = SchemeFileManager.list_schemes(
-            SCHEME_PATH, SCHEME_EXTENSIONS
+            self.user_config['schemes']['path'],
+            self.user_config['schemes']['extensions']
         )
         self.scheme_selector_label = ttk.Label(self, text='Select scheme:')
         self.scheme_selector_label.grid(
@@ -116,8 +116,10 @@ class AppFrame(ttk.Frame):
         """
         try:
             scheme = Scheme(
-                self.scheme_var.get(), SCHEME_PATH, DC_CONFIG_PATHS,
-                self.dark_mode_var.get(), XML_TAGS
+                self.scheme_var.get(), self.user_config['schemes']['path'],
+                self.user_config['doubleCommander']['configPaths'],
+                self.dark_mode_var.get(),
+                self.user_config['schemes']['xmlTags']
             )
             scheme.apply_scheme()
             showinfo(
