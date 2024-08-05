@@ -11,6 +11,14 @@ ICON_PATH = './assets/dct-icon-v3.ico'
 # Application config
 DEFAULT_USER_CONFIG = {
     "configVersion": 1,
+    "doubleCommander": {
+        "backupConfigs": True,
+        "configPaths": {
+            "cfg": "%APPDATA%\\doublecmd\\doublecmd.cfg",
+            "json": "%APPDATA%\\doublecmd\\colors.json",
+            "xml": "%APPDATA%\\doublecmd\\doublecmd.xml"
+        }
+    },
     "schemes": {
         "extensions": [
             "cfg", "json", "xml"
@@ -19,13 +27,6 @@ DEFAULT_USER_CONFIG = {
         "xmlTags": [
             "Colors", "Fonts"
         ]
-    },
-    "doubleCommander": {
-        "configPaths": {
-            "cfg": "%APPDATA%\\doublecmd\\doublecmd.cfg",
-            "json": "%APPDATA%\\doublecmd\\colors.json",
-            "xml": "%APPDATA%\\doublecmd\\doublecmd.xml"
-        }
     }
 }
 USER_CONFIG_PATH = 'dc-themer.json'

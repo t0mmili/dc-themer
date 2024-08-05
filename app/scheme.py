@@ -27,7 +27,8 @@ class Scheme:
                             configuration file.
     """
     def __init__(
-        self, scheme, scheme_path, dc_configs, auto_dark_mode, xml_tags
+        self, scheme, scheme_path, dc_configs, dc_configs_backup,
+        auto_dark_mode, xml_tags
     ):
         """
         Constructs all the necessary attributes for the Scheme object.
@@ -38,6 +39,8 @@ class Scheme:
                                located.
             dc_configs (dict): A dictionary containing DC configuration file
                                types and their paths.
+            dc_configs_backup (bool): A flag to backup DC  configuration before
+                                      scheme apply.
             auto_dark_mode (bool): A flag to force auto dark mode if True.
             xml_tags (list): A list of XML tags to be modified in xml
                              configuration files.
@@ -45,6 +48,7 @@ class Scheme:
         self.scheme = scheme
         self.scheme_path = scheme_path
         self.dc_configs = dc_configs
+        self.dc_configs_backup = dc_configs_backup
         self.auto_dark_mode = auto_dark_mode
         self.xml_tags = xml_tags
 
@@ -71,7 +75,8 @@ class Scheme:
         )
 
         # Backup current configuration
-        DCFileManager.backup_config(target_file)
+        if self.dc_configs_backup:
+            DCFileManager.backup_config(target_file)
 
         # Save modified DC cfg config file
         SchemeFileManager.set_cfg(target_config, target_file)
@@ -86,7 +91,8 @@ class Scheme:
         target_config = SchemeFileManager.get_json(target_file)
 
         # Backup current configuration
-        DCFileManager.backup_config(target_file)
+        if self.dc_configs_backup:
+            DCFileManager.backup_config(target_file)
 
         # Replace the style if name matches
         for i, style in enumerate(target_config['Styles']):
@@ -108,7 +114,8 @@ class Scheme:
         target_file = DCFileManager.get_config(self.dc_configs['xml'])
 
         # Backup current configuration
-        DCFileManager.backup_config(target_file)
+        if self.dc_configs_backup:
+            DCFileManager.backup_config(target_file)
 
         for item in self.xml_tags:
             # Create element tree object

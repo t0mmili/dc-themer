@@ -56,13 +56,31 @@ class App(tk.Tk):
         center_y = (screen_height - height) // 2
         self.geometry(f'{width}x{height}+{center_x}+{center_y}')
 
-if __name__ == '__main__':
+def init_user_config():
+    """
+    Initializes the user configuration.
+
+    Returns:
+        user_config (dict): The user configuration dictionary.
+    """
     user_config_file = UserConfigManager(DEFAULT_USER_CONFIG, USER_CONFIG_PATH)
+    
     if not user_config_file.exists():
         user_config_file.create_default()
+    
     user_config = user_config_file.get_config()
     UserConfigManager.verify(USER_CONFIG_VERSION, user_config['configVersion'])
 
+    return user_config
+
+if __name__ == '__main__':
+    """
+    Main execution point of the application.
+
+    This section initializes user configuration,
+    creates the main application window, and starts the event loop.
+    """
+    user_config = init_user_config()
     app = App()
     AppFrame(app, user_config)
     app.mainloop()

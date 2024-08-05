@@ -118,6 +118,7 @@ class AppFrame(ttk.Frame):
             scheme = Scheme(
                 self.scheme_var.get(), self.user_config['schemes']['path'],
                 self.user_config['doubleCommander']['configPaths'],
+                self.user_config['doubleCommander']['backupConfigs'],
                 self.dark_mode_var.get(),
                 self.user_config['schemes']['xmlTags']
             )

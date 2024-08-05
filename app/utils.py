@@ -27,12 +27,13 @@ class DCFileManager:
         config_path = path.expandvars(dc_config)
 
         # Check if the config file exists
-        if path.exists(config_path):
-            return config_path
-        else:
+        if not path.exists(config_path):
             raise FileNotFoundError(
-                f'Double Commander config file does not exist:\n{config_path}'
+                'Double Commander configuration file does not exist:'
+                f'\n{config_path}'
             )
+
+        return config_path
 
     @staticmethod
     def backup_config(file):
