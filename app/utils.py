@@ -10,7 +10,7 @@ class DCFileManager:
     Provides static methods for managing DC configuration files.
     """
     @staticmethod
-    def get_config(dc_config):
+    def get_config(dc_config: str) -> str:
         """
         Retrieves the path to the specified DC configuration file.
 
@@ -36,7 +36,7 @@ class DCFileManager:
         return config_path
 
     @staticmethod
-    def backup_config(file):
+    def backup_config(file: str) -> None:
         """
         Creates a backup of the specified DC configuration file by copying it
         with a '.backup' extension.
@@ -64,7 +64,7 @@ class SchemeFileManager:
     json, xml).
     """
     @staticmethod
-    def get_cfg(infile):
+    def get_cfg(infile: str) -> ConfigObj:
         """
         Reads a cfg configuration file and returns its contents as a ConfigObj.
 
@@ -97,7 +97,7 @@ class SchemeFileManager:
             return config
 
     @staticmethod
-    def set_cfg(config, outfile):
+    def set_cfg(config: ConfigObj, outfile: str) -> None:
         """
         Writes a configuration object to a cfg file.
 
@@ -128,7 +128,7 @@ class SchemeFileManager:
             )
 
     @staticmethod
-    def get_json(infile):
+    def get_json(infile: str) -> dict:
         """
         Reads, repairs and parses a json configuration file.
 
@@ -161,7 +161,7 @@ class SchemeFileManager:
             return json_data
 
     @staticmethod
-    def set_json(json_data, outfile):
+    def set_json(json_data: dict, outfile: str) -> None:
         """
         Writes json data to a file.
 
@@ -190,7 +190,7 @@ class SchemeFileManager:
             )
 
     @staticmethod
-    def set_xml(xml_data, outfile):
+    def set_xml(xml_data: str, outfile: str) -> None:
         """
         Writes xml data to a file.
 
@@ -219,7 +219,7 @@ class SchemeFileManager:
             )
 
     @staticmethod
-    def list_schemes(scheme_path, scheme_exts):
+    def list_schemes(scheme_path: str, scheme_exts: list[str]) -> list[str]:
         """
         Lists all available schemes in the specified directory that meet the
         required extensions.
@@ -227,11 +227,11 @@ class SchemeFileManager:
         Args:
             scheme_path (str): The path to the directory containing scheme
                                files.
-            scheme_exts (list): A list of required file extensions for each
-                                scheme.
+            scheme_exts (list[str]): A list of required file extensions for
+                                     each scheme.
 
         Returns:
-            list: A sorted list of available scheme names.
+            list[str]: A sorted list of available scheme names.
 
         Raises:
             FileNotFoundError: If the directory does not exist or if required

@@ -4,24 +4,39 @@ from os import path
 from tkinter.messagebox import showerror
 
 class UserConfigManager:
-    def __init__(
-        self, default_user_config, user_config_path
-    ):
-        self.default_user_config = default_user_config
-        self.user_config_path = user_config_path
+    """
+    Manages the user configuration for the application.
 
-    def exists(self):
+    Attributes:
+        default_user_config (dict): The default configuration settings.
+        user_config_path (str): The file path for the user configuration file.
+    """
+    def __init__(
+        self, default_user_config: dict, user_config_path: str
+    ) -> None:
+        self.default_user_config: dict = default_user_config
+        self.user_config_path: str = user_config_path
+
+    def exists(self) -> bool:
         """
-        Verifies a user configuration file exists.
+        Checks if the user configuration file exists and is a json file.
+
+        Returns:
+            bool: True if the file exists and is a json file, False otherwise.
         """
         return path.isfile(
             self.user_config_path
         ) and self.user_config_path.endswith('.json')
     
-    def create_default(self):
-        '''
-        Writes a default user configuration json data to file.
-        '''
+    def create_default(self) -> None:
+        """
+        Creates a default user configuration file from the provided default
+        data.
+
+        Raises:
+            IOError: If there is an issue writing to the file.
+            Exception: For any other unexpected issues.
+        """
         try:
             with open(
                 self.user_config_path, 'w', encoding='utf-8'
@@ -43,9 +58,17 @@ class UserConfigManager:
                 message=f'An unexpected error occurred:\n{str(e)}'
             )
 
-    def get_config(self):
+    def get_config(self) -> dict:
         """
-        Reads, repairs and parses a json user configuration file.
+        Reads the user configuration file, repairs it if necessary, and parses
+        the json data.
+
+        Returns:
+            dict: The parsed json data from the configuration file.
+
+        Raises:
+            IOError: If there is an issue reading the file.
+            Exception: For any other unexpected issues.
         """
         try:
             with open(self.user_config_path, 'r') as json_file:
@@ -66,9 +89,18 @@ class UserConfigManager:
             return json_data
         
     @staticmethod
-    def verify(current_version, read_version):
+    def verify(current_version, read_version) -> None:
         """
-        Verifies existing user configuration version.
+        Checks if the existing user configuration version matches the expected
+        version.
+
+        Args:
+            current_version (str): The expected version of the configuration.
+            read_version (str): The version read from the configuration file.
+
+        Raises:
+            RuntimeError: If there is a version mismatch between the current
+                          and read versions.
         """
         if read_version != current_version:
             raise RuntimeError(

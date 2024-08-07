@@ -1,3 +1,4 @@
+from configobj import ConfigObj
 from defusedxml.ElementTree import parse, tostring
 from defusedxml.minidom import parseString
 from os import path
@@ -12,6 +13,8 @@ class Scheme:
         scheme_path (str): The file path where the scheme files are located.
         dc_configs (dict): A dictionary containing DC configuration file types
                            and their paths.
+        dc_configs_backup (bool): A flag to backup DC  configuration before
+                                  scheme apply.
         auto_dark_mode (bool): A flag to force auto dark mode if True.
         xml_tags (list): A list of XML tags to be modified in XML configuration
                          files.
@@ -27,9 +30,9 @@ class Scheme:
                             configuration file.
     """
     def __init__(
-        self, scheme, scheme_path, dc_configs, dc_configs_backup,
-        auto_dark_mode, xml_tags
-    ):
+        self, scheme: str, scheme_path: str, dc_configs: dict[str, str],
+        dc_configs_backup: bool, auto_dark_mode: bool, xml_tags: list[str]
+    ) -> None:
         """
         Constructs all the necessary attributes for the Scheme object.
 
@@ -37,22 +40,23 @@ class Scheme:
             scheme (str): The name of the scheme.
             scheme_path (str): The file path where the scheme files are
                                located.
-            dc_configs (dict): A dictionary containing DC configuration file
-                               types and their paths.
+            dc_configs (dict[str, str]): A dictionary containing DC
+                                         configuration file types and their
+                                         paths.
             dc_configs_backup (bool): A flag to backup DC  configuration before
                                       scheme apply.
             auto_dark_mode (bool): A flag to force auto dark mode if True.
-            xml_tags (list): A list of XML tags to be modified in xml
-                             configuration files.
+            xml_tags (list[str]): A list of XML tags to be modified in xml
+                                  configuration files.
         """
-        self.scheme = scheme
-        self.scheme_path = scheme_path
-        self.dc_configs = dc_configs
-        self.dc_configs_backup = dc_configs_backup
-        self.auto_dark_mode = auto_dark_mode
-        self.xml_tags = xml_tags
+        self.scheme: str = scheme
+        self.scheme_path: str = scheme_path
+        self.dc_configs: dict[str, str] = dc_configs
+        self.dc_configs_backup: bool = dc_configs_backup
+        self.auto_dark_mode: bool = auto_dark_mode
+        self.xml_tags: list[str] = xml_tags
 
-    def apply_scheme(self):
+    def apply_scheme(self) -> None:
         """
         Applies the scheme to all configuration files (cfg, json, xml).
         """
@@ -60,14 +64,14 @@ class Scheme:
         self.apply_scheme_json()
         self.apply_scheme_xml()
 
-    def apply_scheme_cfg(self):
+    def apply_scheme_cfg(self) -> None:
         """
         Applies the scheme specifically to the cfg configuration file.
         """
-        source_file = path.join(self.scheme_path, f'{self.scheme}.cfg')
-        target_file = DCFileManager.get_config(self.dc_configs['cfg'])
-        source_config = SchemeFileManager.get_cfg(source_file)
-        target_config = SchemeFileManager.get_cfg(target_file)
+        source_file: str = path.join(self.scheme_path, f'{self.scheme}.cfg')
+        target_file: str = DCFileManager.get_config(self.dc_configs['cfg'])
+        source_config: ConfigObj = SchemeFileManager.get_cfg(source_file)
+        target_config: ConfigObj = SchemeFileManager.get_cfg(target_file)
 
         # Set new 'DarkMode' value
         target_config['DarkMode'] = (
@@ -81,14 +85,14 @@ class Scheme:
         # Save modified DC cfg config file
         SchemeFileManager.set_cfg(target_config, target_file)
 
-    def apply_scheme_json(self):
+    def apply_scheme_json(self) -> None:
         """
         Applies the scheme specifically to the json configuration file.
         """
-        source_file = path.join(self.scheme_path, f'{self.scheme}.json')
-        target_file = DCFileManager.get_config(self.dc_configs['json'])
-        source_config = SchemeFileManager.get_json(source_file)
-        target_config = SchemeFileManager.get_json(target_file)
+        source_file: str = path.join(self.scheme_path, f'{self.scheme}.json')
+        target_file: str = DCFileManager.get_config(self.dc_configs['json'])
+        source_config: dict = SchemeFileManager.get_json(source_file)
+        target_config: dict = SchemeFileManager.get_json(target_file)
 
         # Backup current configuration
         if self.dc_configs_backup:
@@ -106,12 +110,12 @@ class Scheme:
         # Save modified DC json config file
         SchemeFileManager.set_json(target_config, target_file)
 
-    def apply_scheme_xml(self):
+    def apply_scheme_xml(self) -> None:
         """
         Applies the scheme specifically to the xml configuration file.
         """
-        source_file = path.join(self.scheme_path, f'{self.scheme}.xml')
-        target_file = DCFileManager.get_config(self.dc_configs['xml'])
+        source_file: str = path.join(self.scheme_path, f'{self.scheme}.xml')
+        target_file: str = DCFileManager.get_config(self.dc_configs['xml'])
 
         # Backup current configuration
         if self.dc_configs_backup:
@@ -133,9 +137,9 @@ class Scheme:
             target_root.append(source_tag)
 
             # Prettify XML
-            xml_str = tostring(target_root, encoding='utf-8')
+            xml_str: str = tostring(target_root, encoding='utf-8')
             dom = parseString(xml_str)
-            pretty_xml = dom.toprettyxml(indent='  ')
+            pretty_xml: str = dom.toprettyxml(indent='  ')
             pretty_xml = '\n'.join(
                 [line for line in pretty_xml.split('\n') if line.strip()]
             )

@@ -19,14 +19,14 @@ class App(tk.Tk):
         center_window(width, height): Centers the window on the screen with
                                       the given dimensions.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initializes the App class by setting up the main application window,
         its properties, and the components.
         """
         super().__init__()
 
-        icon_path = ICON_PATH
+        icon_path: str = ICON_PATH
         # This is necessary for compilation with PyInstaller
         # icon_path = path.abspath(path.join(path.dirname(__file__), ICON_PATH))
 
@@ -42,7 +42,7 @@ class App(tk.Tk):
         # Center the window on the screen
         self.center_window(WINDOW_WIDTH, WINDOW_HEIGHT)
 
-    def center_window(self, width, height):
+    def center_window(self, width: int, height: int) -> None:
         """
         Centers the window on the screen using the specified width and height.
 
@@ -50,13 +50,13 @@ class App(tk.Tk):
             width (int): The width of the window.
             height (int): The height of the window.
         """
-        screen_width = self.winfo_screenwidth()
-        screen_height = self.winfo_screenheight()
-        center_x = (screen_width - width) // 2
-        center_y = (screen_height - height) // 2
+        screen_width: int = self.winfo_screenwidth()
+        screen_height: int = self.winfo_screenheight()
+        center_x: int = (screen_width - width) // 2
+        center_y: int = (screen_height - height) // 2
         self.geometry(f'{width}x{height}+{center_x}+{center_y}')
 
-def init_user_config():
+def init_user_config() -> dict:
     """
     Initializes the user configuration.
 
@@ -68,7 +68,7 @@ def init_user_config():
     if not user_config_file.exists():
         user_config_file.create_default()
     
-    user_config = user_config_file.get_config()
+    user_config: dict = user_config_file.get_config()
     UserConfigManager.verify(USER_CONFIG_VERSION, user_config['configVersion'])
 
     return user_config
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     This section initializes user configuration,
     creates the main application window, and starts the event loop.
     """
-    user_config = init_user_config()
+    user_config: dict = init_user_config()
     app = App()
     AppFrame(app, user_config)
     app.mainloop()
