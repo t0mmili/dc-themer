@@ -29,7 +29,7 @@ class App(tk.Tk):
 
         icon_path: str = ICON_PATH
         # This is necessary for compilation with PyInstaller
-        # icon_path = path.abspath(path.join(path.dirname(__file__), ICON_PATH))
+        # icon_path: str = path.abspath(path.join(path.dirname(__file__), ICON_PATH))
 
         # Set application window properties
         self.iconbitmap(icon_path)
@@ -64,8 +64,13 @@ def init_user_config() -> dict:
     Returns:
         user_config (dict): The user configuration dictionary.
     """
+    
+    default_config_file: str = DEFAULT_USER_CONFIG
+    # This is necessary for compilation with PyInstaller
+    # default_config_file: str = path.abspath(path.join(path.dirname(__file__), DEFAULT_USER_CONFIG))
+
     default_user_config: dict = UserConfigManager.get_config(
-        DEFAULT_USER_CONFIG
+        default_config_file
     )
     user_config_file = UserConfigManager(default_user_config, USER_CONFIG_PATH)
     
