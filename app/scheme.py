@@ -133,8 +133,15 @@ class Scheme:
             target_tag = target_tree.find(f'./{item}')
 
             # Remove current tags and append new ones
-            target_root.remove(target_tag)
-            target_root.append(source_tag)
+            if source_tag is not None:
+                if target_tag is not None:
+                    target_root.remove(target_tag)
+                target_root.append(source_tag)
+            else:
+                raise ValueError(
+                    f'Tag \'{item}\' does not exist in the source xml '
+                    'configuration data.'
+                )
 
             # Prettify XML
             xml_str: str = tostring(target_root, encoding='utf-8')

@@ -1,7 +1,6 @@
 from json import dump
 from json_repair import loads
 from os import path
-from tkinter.messagebox import showerror
 
 class UserConfigManager:
     """
@@ -34,8 +33,7 @@ class UserConfigManager:
         data.
 
         Raises:
-            IOError: If there is an issue writing to the file.
-            Exception: For any other unexpected issues.
+            OSError: If an error occurs while writing to the file.
         """
         try:
             with open(
@@ -45,17 +43,10 @@ class UserConfigManager:
                     self.default_user_config, json_file, ensure_ascii=False,
                     indent=2
                 )
-        except IOError as e:
-            showerror(
-                title='Error',
-                message=(
-                    f'An error occurred while writing to the file:\n{str(e)}'
-                )
-            )
-        except Exception as e:
-            showerror(
-                title='Error',
-                message=f'An unexpected error occurred:\n{str(e)}'
+        except OSError as e:
+            raise OSError(
+                'Failed to write default configuration to '
+                f'{self.user_config_path}:\n{str(e)}'
             )
 
     def get_config(self) -> dict:
@@ -67,26 +58,27 @@ class UserConfigManager:
             dict: The parsed json data from the configuration file.
 
         Raises:
-            IOError: If there is an issue reading the file.
-            Exception: For any other unexpected issues.
+            OSError: If an error occurs while reading the file.
+            TypeError: If file does not contain valid json object data.
         """
         try:
             with open(self.user_config_path, 'r') as json_file:
                 file_content = json_file.read()
-        except IOError as e:
-            showerror(
-                title='Error',
-                message=f'An error occurred while reading the file:\n{str(e)}'
-            )
-        except Exception as e:
-            showerror(
-                title='Error',
-                message=f'An unexpected error occurred:\n{str(e)}'
-            )
-        else:
             json_data = loads(file_content)
 
+            # Ensure json_data is a dictionary
+            if not isinstance(json_data, dict):
+                raise TypeError(
+                    f'The configuration file {self.user_config_path} does not '
+                    'contain valid json object data.'
+                )
+ 
             return json_data
+        except OSError as e:
+            raise OSError(
+                f'Failed to read configuration from {self.user_config_path}:'
+                f'\n{str(e)}'
+            )
         
     @staticmethod
     def verify(current_version, read_version) -> None:
@@ -100,7 +92,7 @@ class UserConfigManager:
 
         Raises:
             RuntimeError: If there is a version mismatch between the current
-                          and read versions.
+                          and read version.
         """
         if read_version != current_version:
             raise RuntimeError(

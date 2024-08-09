@@ -5,6 +5,7 @@ from config import (
 )
 from gui import AppFrame, AppMenuBar
 from os import path
+from tkinter.messagebox import showerror
 from user_config import UserConfigManager
 
 class App(tk.Tk):
@@ -80,7 +81,13 @@ if __name__ == '__main__':
     This section initializes user configuration,
     creates the main application window, and starts the event loop.
     """
-    user_config: dict = init_user_config()
-    app = App()
-    AppFrame(app, user_config)
-    app.mainloop()
+    try:
+        user_config: dict = init_user_config()
+        app = App()
+        AppFrame(app, user_config)
+        app.mainloop()
+    except Exception as e:
+        showerror(
+            title='Error',
+            message=str(e)
+        )

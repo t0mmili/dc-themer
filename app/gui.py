@@ -137,5 +137,5 @@ class AppFrame(ttk.Frame):
         except Exception as e:
             showerror(
                 title='Error',
-                message=f'An unexpected error occurred:\n{str(e)}'
+                message=str(e)
             )
