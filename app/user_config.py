@@ -49,7 +49,8 @@ class UserConfigManager:
                 f'{self.user_config_path}:\n{str(e)}'
             )
 
-    def get_config(self) -> dict:
+    @staticmethod
+    def get_config(infile) -> dict:
         """
         Reads the user configuration file, repairs it if necessary, and parses
         the json data.
@@ -62,22 +63,21 @@ class UserConfigManager:
             TypeError: If file does not contain valid json object data.
         """
         try:
-            with open(self.user_config_path, 'r') as json_file:
+            with open(infile, 'r') as json_file:
                 file_content = json_file.read()
             json_data = loads(file_content)
 
             # Ensure json_data is a dictionary
             if not isinstance(json_data, dict):
                 raise TypeError(
-                    f'The configuration file {self.user_config_path} does not '
-                    'contain valid json object data.'
+                    f'The configuration file {infile} does not contain valid '
+                    'json object data.'
                 )
  
             return json_data
         except OSError as e:
             raise OSError(
-                f'Failed to read configuration from {self.user_config_path}:'
-                f'\n{str(e)}'
+                f'Failed to read configuration from {infile}:\n{str(e)}'
             )
         
     @staticmethod

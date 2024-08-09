@@ -64,12 +64,15 @@ def init_user_config() -> dict:
     Returns:
         user_config (dict): The user configuration dictionary.
     """
-    user_config_file = UserConfigManager(DEFAULT_USER_CONFIG, USER_CONFIG_PATH)
+    default_user_config: dict = UserConfigManager.get_config(
+        DEFAULT_USER_CONFIG
+    )
+    user_config_file = UserConfigManager(default_user_config, USER_CONFIG_PATH)
     
     if not user_config_file.exists():
         user_config_file.create_default()
     
-    user_config: dict = user_config_file.get_config()
+    user_config: dict = UserConfigManager.get_config(USER_CONFIG_PATH)
     UserConfigManager.verify(USER_CONFIG_VERSION, user_config['configVersion'])
 
     return user_config
