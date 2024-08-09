@@ -1,0 +1,23 @@
+{
+  "configVersion": 1,
+  "doubleCommander": {
+    "backupConfigs": true,
+    "configPaths": {
+      "cfg": "%APPDATA%\\doublecmd\\doublecmd.cfg",
+      "json": "%APPDATA%\\doublecmd\\colors.json",
+      "xml": "%APPDATA%\\doublecmd\\doublecmd.xml"
+    }
+  },
+  "schemes": {
+    "extensions": [
+      "cfg",
+      "json",
+      "xml"
+    ],
+    "path": "./schemes",
+    "xmlTags": [
+      "Colors",
+      "Fonts"
+    ]
+  }
+}

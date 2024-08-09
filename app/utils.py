@@ -3,14 +3,13 @@ from json import dump
 from json_repair import loads
 from os import listdir, path
 from shutil import copy
-from tkinter.messagebox import showerror
 
 class DCFileManager:
     """
     Provides static methods for managing DC configuration files.
     """
     @staticmethod
-    def get_config(dc_config):
+    def get_config(dc_config: str) -> str:
         """
         Retrieves the path to the specified DC configuration file.
 
@@ -27,15 +26,16 @@ class DCFileManager:
         config_path = path.expandvars(dc_config)
 
         # Check if the config file exists
-        if path.exists(config_path):
-            return config_path
-        else:
+        if not path.exists(config_path):
             raise FileNotFoundError(
-                f'Double Commander config file does not exist:\n{config_path}'
+                'Double Commander configuration file does not exist:'
+                f'\n{config_path}'
             )
 
+        return config_path
+
     @staticmethod
-    def backup_config(file):
+    def backup_config(file: str) -> None:
         """
         Creates a backup of the specified DC configuration file by copying it
         with a '.backup' extension.
@@ -44,18 +44,12 @@ class DCFileManager:
             file (str): The path to the file to be backed up.
 
         Raises:
-            Exception: If an error occurs during the backup process.
+            OSError: If an error occurs during the backup process.
         """
         try:
             copy(file, f'{file}.backup')
-        except Exception as e:
-            showerror(
-                title='Error',
-                message=(
-                    'An unexpected error occurred while backing up the file:'
-                    f'\n{str(e)}'
-                )
-            )
+        except OSError as e:
+            raise OSError(f'Failed to create backup of {file}:\n{str(e)}')
 
 class SchemeFileManager:
     """
@@ -63,7 +57,7 @@ class SchemeFileManager:
     json, xml).
     """
     @staticmethod
-    def get_cfg(infile):
+    def get_cfg(infile: str) -> ConfigObj:
         """
         Reads a cfg configuration file and returns its contents as a ConfigObj.
 
@@ -75,28 +69,18 @@ class SchemeFileManager:
 
         Raises:
             ConfigObjError: If an error occurs while parsing the cfg file.
-            Exception: If an unexpected error occurs.
         """
         try:
             config = ConfigObj(infile)
-        except ConfigObjError as e:
-            showerror(
-                title='Error',
-                message=(
-                    'An error occurred while parsing the configuration file:'
-                    f'\n{str(e)}'
-                )
-            )
-        except Exception as e:
-            showerror(
-                title='Error',
-                message=f'An unexpected error occurred:\n{str(e)}'
-            )
-        else:
+
             return config
+        except ConfigObjError as e:
+            raise ConfigObjError(
+                f'Failed to parse the configuration file {infile}:\n{str(e)}'
+            )
 
     @staticmethod
-    def set_cfg(config, outfile):
+    def set_cfg(config: ConfigObj, outfile: str) -> None:
         """
         Writes a configuration object to a cfg file.
 
@@ -105,29 +89,20 @@ class SchemeFileManager:
             outfile (str): The path to the output cfg file.
 
         Raises:
-            IOError: If an error occurs while writing to the file.
-            Exception: If an unexpected error occurs.
+            OSError: If an error occurs while writing to the file.
         """
         try:
             with open(outfile, 'w', encoding='utf-8') as cfg_file:
                 for key in config:
                     line = f'{key}={config[key]}\n'
                     cfg_file.write(line)
-        except IOError as e:
-            showerror(
-                title='Error',
-                message=(
-                    f'An error occurred while writing to the file:\n{str(e)}'
-                )
-            )
-        except Exception as e:
-            showerror(
-                title='Error',
-                message=f'An unexpected error occurred:\n{str(e)}'
+        except OSError as e:
+            raise OSError(
+                f'Failed to write configuration to {outfile}:\n{str(e)}'
             )
 
     @staticmethod
-    def get_json(infile):
+    def get_json(infile: str) -> dict:
         """
         Reads, repairs and parses a json configuration file.
 
@@ -138,29 +113,29 @@ class SchemeFileManager:
             dict: The parsed json data.
 
         Raises:
-            IOError: If an error occurs while reading the file.
-            Exception: If an unexpected error occurs.
+            OSError: If an error occurs while reading the file.
+            TypeError: If file does not contain valid json object data.
         """
         try:
             with open(infile, 'r') as json_file:
                 file_content = json_file.read()
-        except IOError as e:
-            showerror(
-                title='Error',
-                message=f'An error occurred while reading the file:\n{str(e)}'
-            )
-        except Exception as e:
-            showerror(
-                title='Error',
-                message=f'An unexpected error occurred:\n{str(e)}'
-            )
-        else:
             json_data = loads(file_content)
 
+            # Ensure json_data is a dictionary
+            if not isinstance(json_data, dict):
+                raise TypeError(
+                    'The configuration file {infile} does not contain valid '
+                    'json object data.'
+                )
+ 
             return json_data
+        except OSError as e:
+            raise OSError(
+                f'Failed to read configuration from {infile}:\n{str(e)}'
+            )
 
     @staticmethod
-    def set_json(json_data, outfile):
+    def set_json(json_data: dict, outfile: str) -> None:
         """
         Writes json data to a file.
 
@@ -169,27 +144,18 @@ class SchemeFileManager:
             outfile (str): The path to the output file.
 
         Raises:
-            IOError: If an error occurs while writing to the file.
-            Exception: If an unexpected error occurs.
+            OSError: If an error occurs while writing to the file.
         """
         try:
             with open(outfile, 'w', encoding='utf-8') as json_file:
                 dump(json_data, json_file, ensure_ascii=False, indent=2)
-        except IOError as e:
-            showerror(
-                title='Error',
-                message=(
-                    f'An error occurred while writing to the file:\n{str(e)}'
-                )
-            )
-        except Exception as e:
-            showerror(
-                title='Error',
-                message=f'An unexpected error occurred:\n{str(e)}'
+        except OSError as e:
+            raise OSError(
+                f'Failed to write configuration to {outfile}:\n{str(e)}'
             )
 
     @staticmethod
-    def set_xml(xml_data, outfile):
+    def set_xml(xml_data: str, outfile: str) -> None:
         """
         Writes xml data to a file.
 
@@ -198,27 +164,18 @@ class SchemeFileManager:
             outfile (str): The path to the output file.
 
         Raises:
-            IOError: If an error occurs while writing to the file.
-            Exception: If an unexpected error occurs.
+            OSError: If an error occurs while writing to the file.
         """
         try:
             with open(outfile, 'w', encoding='utf-8') as xml_file:
                 xml_file.write(xml_data)
-        except IOError as e:
-            showerror(
-                title='Error',
-                message=(
-                    f'An error occurred while writing to the file:\n{str(e)}'
-                )
-            )
-        except Exception as e:
-            showerror(
-                title='Error',
-                message=f'An unexpected error occurred:\n{str(e)}'
+        except OSError as e:
+            raise OSError(
+                f'Failed to write configuration to {outfile}:\n{str(e)}'
             )
 
     @staticmethod
-    def list_schemes(scheme_path, scheme_exts):
+    def list_schemes(scheme_path: str, scheme_exts: list[str]) -> list[str]:
         """
         Lists all available schemes in the specified directory that meet the
         required extensions.
@@ -226,15 +183,15 @@ class SchemeFileManager:
         Args:
             scheme_path (str): The path to the directory containing scheme
                                files.
-            scheme_exts (list): A list of required file extensions for each
-                                scheme.
+            scheme_exts (list[str]): A list of required file extensions for
+                                     each scheme.
 
         Returns:
-            list: A sorted list of available scheme names.
+            list[str]: A sorted list of available scheme names.
 
         Raises:
-            FileNotFoundError: If the directory does not exist or if required
-                               scheme files are missing.
+            FileNotFoundError: If the directory does not exist or required
+                               files are missing.
         """
         # Verify the existence of the scheme directory
         if not path.exists(scheme_path):
