@@ -6,6 +6,7 @@ from config import (
 from gui import AppFrame, AppMenuBar
 from tkinter.messagebox import showerror
 from user_config import UserConfigManager
+from utils import AppUtils
 
 class App(tk.Tk):
     """
@@ -26,9 +27,7 @@ class App(tk.Tk):
         """
         super().__init__()
 
-        icon_path: str = ICON_PATH
-        # This is necessary for compilation with PyInstaller
-        # icon_path: str = path.abspath(path.join(path.dirname(__file__), ICON_PATH))
+        icon_path: str = AppUtils.get_asset_path(ICON_PATH)
 
         # Set application window properties
         self.iconbitmap(icon_path)
@@ -63,9 +62,7 @@ def init_user_config() -> dict:
     Returns:
         user_config (dict): The user configuration dictionary.
     """
-    default_config_file: str = DEFAULT_USER_CONFIG
-    # This is necessary for compilation with PyInstaller
-    # default_config_file: str = path.abspath(path.join(path.dirname(__file__), DEFAULT_USER_CONFIG))
+    default_config_file: str = AppUtils.get_asset_path(DEFAULT_USER_CONFIG)
 
     default_user_config: dict = UserConfigManager.get_config(
         default_config_file

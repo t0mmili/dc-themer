@@ -1,8 +1,32 @@
+import sys
 from configobj import ConfigObj, ConfigObjError
 from json import dump
 from json_repair import loads
 from os import listdir, path
 from shutil import copy
+
+class AppUtils:
+    """
+    Provides static methods that can be used throughout the application.
+    """
+    @staticmethod
+    def get_asset_path(infile: str) -> str:
+        """
+        Gets absolute path to the application asset.
+        Path will work for dev Python environment and PyInstaller compiled exe.
+
+        Args:
+            infile (str): The path to the asset file.
+
+        Returns:
+            str: The absolute path to the asset file.
+        """
+        try:
+            base_path: str = sys._MEIPASS
+        except Exception:
+            base_path: str = path.dirname(path.dirname(path.abspath(__file__)))
+
+        return path.join(base_path, infile)
 
 class DCFileManager:
     """

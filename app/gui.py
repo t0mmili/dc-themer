@@ -10,7 +10,7 @@ from scheme import Scheme
 from subprocess import run
 from tkinter import ttk
 from tkinter.messagebox import showerror, showinfo
-from utils import SchemeFileManager
+from utils import AppUtils, SchemeFileManager
 from webbrowser import open
 
 class AppMenuBar:
@@ -83,9 +83,7 @@ class AppMenuBar:
         """
         about_window: tk.Toplevel = tk.Toplevel()
 
-        icon_path: str = ICON_PATH
-        # This is necessary for compilation with PyInstaller
-        # icon_path: str = path.abspath(path.join(path.dirname(__file__), ICON_PATH))
+        icon_path: str = AppUtils.get_asset_path(ICON_PATH)
 
         # Set window properties
         about_window.iconbitmap(icon_path)

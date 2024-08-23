@@ -26,7 +26,7 @@ class UserConfigManager:
         return path.isfile(
             self.user_config_path
         ) and self.user_config_path.endswith('.json')
-    
+
     def create_default(self) -> None:
         """
         Creates a default user configuration file from the provided default
@@ -79,7 +79,7 @@ class UserConfigManager:
             raise OSError(
                 f'Failed to read configuration from {infile}:\n{str(e)}'
             )
-        
+
     @staticmethod
     def verify(current_version, read_version) -> None:
         """
