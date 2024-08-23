@@ -43,11 +43,10 @@ class UserConfigManager:
                     self.default_user_config, json_file, ensure_ascii=False,
                     indent=2
                 )
-        except OSError as e:
+        except Exception as e:
             raise OSError(
-                'Failed to write default configuration to '
-                f'{self.user_config_path}:\n{str(e)}'
-            )
+                f'Failed to write default configuration.\n\n{str(e)}'
+            ) from e
 
     @staticmethod
     def get_config(infile) -> dict:
@@ -75,10 +74,10 @@ class UserConfigManager:
                 )
  
             return json_data
-        except OSError as e:
+        except Exception as e:
             raise OSError(
-                f'Failed to read configuration from {infile}:\n{str(e)}'
-            )
+                f'Failed to read configuration.\n\n{str(e)}'
+            ) from e
 
     @staticmethod
     def verify(current_version, read_version) -> None:

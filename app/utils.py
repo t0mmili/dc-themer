@@ -52,8 +52,8 @@ class DCFileManager:
         # Check if the config file exists
         if not path.exists(config_path):
             raise FileNotFoundError(
-                'Double Commander configuration file does not exist:'
-                f'\n{config_path}'
+                'Double Commander configuration file does not exist: '
+                f'{config_path}'
             )
 
         return config_path
@@ -72,8 +72,10 @@ class DCFileManager:
         """
         try:
             copy(file, f'{file}.backup')
-        except OSError as e:
-            raise OSError(f'Failed to create backup of {file}:\n{str(e)}')
+        except Exception as e:
+            raise OSError(
+                f'Failed to create backup.\n\n{str(e)}'
+            ) from e
 
 class SchemeFileManager:
     """
@@ -100,8 +102,8 @@ class SchemeFileManager:
             return config
         except ConfigObjError as e:
             raise ConfigObjError(
-                f'Failed to parse the configuration file {infile}:\n{str(e)}'
-            )
+                f'Failed to parse the configuration.\n\n{str(e)}'
+            ) from e
 
     @staticmethod
     def set_cfg(config: ConfigObj, outfile: str) -> None:
@@ -120,10 +122,10 @@ class SchemeFileManager:
                 for key in config:
                     line = f'{key}={config[key]}\n'
                     cfg_file.write(line)
-        except OSError as e:
+        except Exception as e:
             raise OSError(
-                f'Failed to write configuration to {outfile}:\n{str(e)}'
-            )
+                f'Failed to write configuration.\n\n{str(e)}'
+            ) from e
 
     @staticmethod
     def get_json(infile: str) -> dict:
@@ -153,10 +155,10 @@ class SchemeFileManager:
                 )
  
             return json_data
-        except OSError as e:
+        except Exception as e:
             raise OSError(
-                f'Failed to read configuration from {infile}:\n{str(e)}'
-            )
+                f'Failed to read configuration.\n\n{str(e)}'
+            ) from e
 
     @staticmethod
     def set_json(json_data: dict, outfile: str) -> None:
@@ -173,10 +175,10 @@ class SchemeFileManager:
         try:
             with open(outfile, 'w', encoding='utf-8') as json_file:
                 dump(json_data, json_file, ensure_ascii=False, indent=2)
-        except OSError as e:
+        except Exception as e:
             raise OSError(
-                f'Failed to write configuration to {outfile}:\n{str(e)}'
-            )
+                f'Failed to write configuration.\n\n{str(e)}'
+            ) from e
 
     @staticmethod
     def set_xml(xml_data: str, outfile: str) -> None:
@@ -193,10 +195,10 @@ class SchemeFileManager:
         try:
             with open(outfile, 'w', encoding='utf-8') as xml_file:
                 xml_file.write(xml_data)
-        except OSError as e:
+        except Exception as e:
             raise OSError(
-                f'Failed to write configuration to {outfile}:\n{str(e)}'
-            )
+                f'Failed to write configuration.\n\n{str(e)}'
+            ) from e
 
     @staticmethod
     def list_schemes(scheme_path: str, scheme_exts: list[str]) -> list[str]:
