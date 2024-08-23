@@ -1,10 +1,17 @@
+import platform
 import tkinter as tk
-import webbrowser
-from config import APP_AUTHOR, APP_NAME, APP_VERSION, DEV_YEARS, REPO_URL
+import tkinter.font as tkFont
+from config import (
+    ABOUT_TITLE_FONT_SIZE, ABOUT_TITLE_FONT_WEIGHT, APP_AUTHOR, APP_NAME,
+    APP_VERSION, DEV_YEARS, ICON_PATH, LICENSE_PATH, REPO_URL
+)
+from os import startfile
 from scheme import Scheme
+from subprocess import run
 from tkinter import ttk
 from tkinter.messagebox import showerror, showinfo
 from utils import SchemeFileManager
+from webbrowser import open
 
 class AppMenuBar:
     """
@@ -20,30 +27,105 @@ class AppMenuBar:
                         a top-level window.
     """
     def __init__(self, parent: tk.Tk) -> None:
-        about_message: str = (
-            f'{APP_NAME} v{APP_VERSION}\n\n'
-            f'Copyright (c) {DEV_YEARS} {APP_AUTHOR}. All rights reserved.\n\n'
-            f'This is open source software, released under the MIT License.'
-        )
-
+        """
+        Initializes the AppMenuBar class by setting up the Menu Bar items.
+        """
         # Initialize Menu Bar
         self.menu_bar: tk.Menu = tk.Menu(parent)
 
-        # Add Menu Bar items
+        # Add Menu Bar items: File
         self.file_menu: tk.Menu = tk.Menu(self.menu_bar, tearoff=False)
         self.file_menu.add_command(label='Exit', command=lambda: parent.quit())
         self.menu_bar.add_cascade(label='File', menu=self.file_menu)
 
+        # Add Menu Bar items: Help
         self.help_menu: tk.Menu = tk.Menu(self.menu_bar, tearoff=False)
         self.help_menu.add_command(
             label=f'{APP_NAME} on GitHub',
-            command=lambda: webbrowser.open(REPO_URL)
+            command=lambda: open(REPO_URL)
         )
         self.help_menu.add_command(
             label='About',
-            command=lambda: showinfo(title='About', message=about_message)
+            command=self.show_about_window
         )
         self.menu_bar.add_cascade(label='Help', menu=self.help_menu)
+
+    def center_window(self, window: tk.Toplevel) -> None:
+        """
+        Centers the window on the screen.
+
+        Args:
+            window (tk.Toplevel): Window object.
+        """
+        window.update_idletasks()
+        width: int = window.winfo_width()
+        height: int = window.winfo_height()
+        screen_width: int = window.winfo_screenwidth()
+        screen_height: int = window.winfo_screenheight()
+        center_x: int = (screen_width - width) // 2
+        center_y: int = (screen_height - height) // 2
+        window.geometry(f'{width}x{height}+{center_x}+{center_y}')
+
+    def open_license(self) -> None:
+        """
+        Opens LICENSE file using default system application.
+        """
+        if platform.system() == 'Windows':   # Windows
+            startfile(LICENSE_PATH)
+        elif platform.system() == 'Darwin':   # macOS
+            run(['open', LICENSE_PATH])
+        else:   # Linux and others
+            run(['xdg-open', LICENSE_PATH])
+
+    def show_about_window(self) -> None:
+        """
+        Sets and displays About modal window.
+        """
+        about_window: tk.Toplevel = tk.Toplevel()
+
+        icon_path: str = ICON_PATH
+        # This is necessary for compilation with PyInstaller
+        # icon_path: str = path.abspath(path.join(path.dirname(__file__), ICON_PATH))
+
+        # Set window properties
+        about_window.iconbitmap(icon_path)
+        about_window.resizable(False, False)
+        about_window.title('About')
+
+        # Set font properties for app name and version
+        title_font: tkFont.Font = tkFont.Font(
+            size=ABOUT_TITLE_FONT_SIZE, weight=ABOUT_TITLE_FONT_WEIGHT
+        )
+
+        about_message: str = (
+            f'Copyright (c) {DEV_YEARS} {APP_AUTHOR}. All rights reserved.\n\n'
+            f'This is open source software, released under the MIT License.'
+        )
+
+        ttk.Label(
+            about_window, text=f'{APP_NAME} v{APP_VERSION}', font=title_font,
+            justify=tk.LEFT, padding=(10,10)
+        ).pack(anchor='w')
+        ttk.Label(
+            about_window, text=about_message, justify=tk.LEFT, padding=(10,0)
+        ).pack(anchor='w')
+
+        button_frame = ttk.Frame(about_window)
+
+        button_frame.pack(pady=10)
+        ttk.Button(
+            button_frame, text='License', command=self.open_license
+        ).pack(side=tk.LEFT, padx=5)
+        ttk.Button(
+            button_frame, text='Close', command=lambda: about_window.destroy()
+        ).pack(side=tk.LEFT, padx=5)
+
+        self.center_window(about_window)
+
+        # Make window modal and set focus
+        about_window.grab_set()
+        about_window.focus_set()
+        about_window.wait_window()
 
 class AppFrame(ttk.Frame):
     """
@@ -67,6 +149,9 @@ class AppFrame(ttk.Frame):
                             settings.
     """
     def __init__(self, container: tk.Tk, user_config: dict) -> None:
+        """
+        Initializes the AppFrame class by setting up the widgets.
+        """
         super().__init__(container)
         self.user_config: dict = user_config
 

@@ -1,10 +1,9 @@
 import tkinter as tk
 from config import (
     APP_NAME, ICON_PATH, DEFAULT_USER_CONFIG, USER_CONFIG_PATH,
-    USER_CONFIG_VERSION, WINDOW_HEIGHT, WINDOW_WIDTH
+    USER_CONFIG_VERSION, MAIN_WINDOW_HEIGHT, MAIN_WINDOW_WIDTH
 )
 from gui import AppFrame, AppMenuBar
-from os import path
 from tkinter.messagebox import showerror
 from user_config import UserConfigManager
 
@@ -41,7 +40,7 @@ class App(tk.Tk):
         self.config(menu=self.menu.menu_bar)
 
         # Center the window on the screen
-        self.center_window(WINDOW_WIDTH, WINDOW_HEIGHT)
+        self.center_window(MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT)
 
     def center_window(self, width: int, height: int) -> None:
         """
@@ -64,7 +63,6 @@ def init_user_config() -> dict:
     Returns:
         user_config (dict): The user configuration dictionary.
     """
-    
     default_config_file: str = DEFAULT_USER_CONFIG
     # This is necessary for compilation with PyInstaller
     # default_config_file: str = path.abspath(path.join(path.dirname(__file__), DEFAULT_USER_CONFIG))
@@ -73,10 +71,10 @@ def init_user_config() -> dict:
         default_config_file
     )
     user_config_file = UserConfigManager(default_user_config, USER_CONFIG_PATH)
-    
+
     if not user_config_file.exists():
         user_config_file.create_default()
-    
+
     user_config: dict = UserConfigManager.get_config(USER_CONFIG_PATH)
     UserConfigManager.verify(USER_CONFIG_VERSION, user_config['configVersion'])
 
