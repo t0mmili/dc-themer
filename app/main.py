@@ -1,12 +1,12 @@
 import tkinter as tk
 from config import (
     APP_NAME, ICON_PATH, DEFAULT_USER_CONFIG, USER_CONFIG_PATH,
-    USER_CONFIG_VERSION, WINDOW_HEIGHT, WINDOW_WIDTH
+    USER_CONFIG_VERSION, MAIN_WINDOW_HEIGHT, MAIN_WINDOW_WIDTH
 )
 from gui import AppFrame, AppMenuBar
-from os import path
 from tkinter.messagebox import showerror
 from user_config import UserConfigManager
+from utils import AppUtils
 
 class App(tk.Tk):
     """
@@ -27,9 +27,7 @@ class App(tk.Tk):
         """
         super().__init__()
 
-        icon_path: str = ICON_PATH
-        # This is necessary for compilation with PyInstaller
-        # icon_path: str = path.abspath(path.join(path.dirname(__file__), ICON_PATH))
+        icon_path: str = AppUtils.get_asset_path(ICON_PATH)
 
         # Set application window properties
         self.iconbitmap(icon_path)
@@ -41,7 +39,7 @@ class App(tk.Tk):
         self.config(menu=self.menu.menu_bar)
 
         # Center the window on the screen
-        self.center_window(WINDOW_WIDTH, WINDOW_HEIGHT)
+        self.center_window(MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT)
 
     def center_window(self, width: int, height: int) -> None:
         """
@@ -64,19 +62,16 @@ def init_user_config() -> dict:
     Returns:
         user_config (dict): The user configuration dictionary.
     """
-    
-    default_config_file: str = DEFAULT_USER_CONFIG
-    # This is necessary for compilation with PyInstaller
-    # default_config_file: str = path.abspath(path.join(path.dirname(__file__), DEFAULT_USER_CONFIG))
+    default_config_file: str = AppUtils.get_asset_path(DEFAULT_USER_CONFIG)
 
     default_user_config: dict = UserConfigManager.get_config(
         default_config_file
     )
     user_config_file = UserConfigManager(default_user_config, USER_CONFIG_PATH)
-    
+
     if not user_config_file.exists():
         user_config_file.create_default()
-    
+
     user_config: dict = UserConfigManager.get_config(USER_CONFIG_PATH)
     UserConfigManager.verify(USER_CONFIG_VERSION, user_config['configVersion'])
 
