@@ -138,7 +138,8 @@ class AppFrame(ttk.Frame):
         scheme_selector (ttk.OptionMenu): Dropdown menu to select a scheme.
         dark_mode_tick (ttk.Checkbutton): Checkbox to enable or disable auto
                                           dark mode.
-        apply_button (ttk.Button): Button to apply the selected scheme.
+        apply_button (ttk.Button): Button to verify and apply the selected
+                                   scheme.
 
     Args:
         container (tk.Tk): The parent widget, typically an instance of Tk or
@@ -155,6 +156,37 @@ class AppFrame(ttk.Frame):
 
         self.setup_widgets()
         self.grid(padx=10, pady=10, sticky=tk.NSEW)
+        self.initialize_scheme()
+
+    def initialize_scheme(self) -> None:
+        """
+        Initialize object of Scheme class.
+        """
+        self.scheme = Scheme(
+            self.scheme_var.get(), self.user_config['schemes']['path'],
+            self.user_config['doubleCommander']['configPaths'],
+            self.user_config['doubleCommander']['backupConfigs'],
+            self.dark_mode_var.get(),
+            self.user_config['schemes']['xmlTags']
+        )
+
+    def modify_scheme(self) -> None:
+        """
+        Applies the selected scheme and updates the configuration accordingly.
+        """
+        try:
+            self.scheme.apply_scheme()
+            showinfo(
+                title='Info',
+                message=(
+                    f'Scheme \'{self.scheme_var.get()}\' applied successfully.'
+                )
+            )
+        except Exception as e:
+            showerror(
+                title='Error',
+                message=str(e)
+            )
 
     def setup_widgets(self) -> None:
         """
@@ -189,34 +221,23 @@ class AppFrame(ttk.Frame):
             column=0, row=1, columnspan=2, sticky=tk.W, **options
         )
 
-        # Apply Scheme button
+        # Initialize, verify and apply scheme
         self.apply_button: ttk.Button = ttk.Button(
-            self, text='Apply', command=self.modify_scheme
+            self, text='Apply', command=lambda: (
+                self.initialize_scheme(), self.verify_scheme(),
+                self.modify_scheme()
+            )
         )
         self.apply_button.grid(
             column=0, row=2, columnspan=2, sticky=tk.W, **options
         )
 
-    def modify_scheme(self) -> None:
+    def verify_scheme(self) -> None:
         """
-        Applies the selected scheme and updates the configuration accordingly.
+        Verifies the selected scheme version against target scheme version.
         """
         try:
-            scheme = Scheme(
-                self.scheme_var.get(), self.user_config['schemes']['path'],
-                self.user_config['doubleCommander']['configPaths'],
-                self.user_config['doubleCommander']['backupConfigs'],
-                self.dark_mode_var.get(),
-                self.user_config['schemes']['xmlTags']
-            )
-            scheme.apply_scheme()
-            showinfo(
-                title='Info',
-                message=(
-                    f'Scheme \'{self.scheme_var.get()}\' '
-                    f'applied successfully.'
-                )
-            )
+            self.scheme.verify_scheme()
         except Exception as e:
             showerror(
                 title='Error',
