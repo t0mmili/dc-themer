@@ -2,6 +2,7 @@ from configobj import ConfigObj
 from defusedxml.ElementTree import parse, tostring
 from defusedxml.minidom import parseString
 from os import path
+from tkinter.messagebox import showwarning
 from utils import DCFileManager, SchemeFileManager
 
 class Scheme:
@@ -28,6 +29,10 @@ class Scheme:
                              configuration file.
         apply_scheme_xml(): Applies the scheme specifically to the xml
                             configuration file.
+        verify_scheme(): Verifies the scheme version of all configuration files
+                         (cfg, json, xml).
+        verify_scheme_version_xml(): Verifies the scheme version of xml
+                                     configuration file specifically.
     """
     def __init__(
         self, scheme: str, scheme_path: str, dc_configs: dict[str, str],
@@ -153,3 +158,40 @@ class Scheme:
 
             # Save modified DC xml config file
             SchemeFileManager.set_xml(pretty_xml, target_file)
+
+    def verify_scheme(self) -> None:
+        """
+        Verifies the scheme version of all configuration files
+        (cfg, json, xml).
+        """
+        self.verify_scheme_version_xml()
+
+    def verify_scheme_version_xml(self) -> None:
+        """
+        Verifies the scheme version of xml configuration file specifically.
+        """
+        source_file: str = path.join(self.scheme_path, f'{self.scheme}.xml')
+        target_file: str = DCFileManager.get_config(self.dc_configs['xml'])
+
+        source_tree = parse(source_file)
+        target_tree = parse(target_file)
+
+        source_config_version: str | None = (
+            source_tree.getroot().attrib.get('ConfigVersion')
+        )
+        target_config_version: str | None = (
+            target_tree.getroot().attrib.get('ConfigVersion')
+        )
+
+        if source_config_version != target_config_version:
+            showwarning(
+                title='Warning',
+                message=(
+                    'XML configuration scheme version mismatch:\n\n'
+                    f'Source scheme: {source_config_version}\n'
+                    f'Target scheme: {target_config_version}\n\n'
+                    'The apply process will continue.\n'
+                    'In case of any issues, please verify your configuration '
+                    'files.'
+                )
+            )
