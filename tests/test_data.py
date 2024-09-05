@@ -23,4 +23,4 @@ USER_CONFIG_DEFAULT = {
     ]
   }
 }
-USER_CONFIG_PATH = 'dc-themer.json'
+USER_CONFIG_PATH = 'dc-themer-test.json'

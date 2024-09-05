@@ -1,11 +1,12 @@
-import os
-import sys
 import test_data
 import unittest
+from json import dump
+from os import path, remove
+from sys import path as sys_path
 from unittest.mock import patch
 
 # Append the parent directory to the system path to access app module
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys_path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from app import user_config
 
 class TestUserConfigManager(unittest.TestCase):
@@ -21,12 +22,32 @@ class TestUserConfigManager(unittest.TestCase):
             test_data.USER_CONFIG_DEFAULT, test_data.USER_CONFIG_PATH
         )
 
+    def setUp(self):
+        """
+        Creates the test configuration file.
+        """
+        with open(
+            test_data.USER_CONFIG_PATH, 'w', encoding='utf-8'
+        ) as json_file:
+            dump(
+                test_data.USER_CONFIG_DEFAULT, json_file, ensure_ascii=False,
+                indent=2
+            )
+
+    def tearDown(self):
+        """
+        Removes the test configuration file.
+        """
+        if path.exists(test_data.USER_CONFIG_PATH):
+            remove(test_data.USER_CONFIG_PATH)
+
     def test_exists(self):
         """
         Tests the exists method.
         """
         self.assertTrue(
-            self.user_config.exists()
+            self.user_config.exists(),
+            "DC Themer configuration file does not exist."
         )
 
     @patch('builtins.open', new_callable=unittest.mock.mock_open)
