@@ -1,9 +1,9 @@
-from configobj import ConfigObj
-from defusedxml.ElementTree import parse, tostring
-from defusedxml.minidom import parseString
-from os import path
+import os
 from tkinter.messagebox import showwarning
-from utils import DCFileManager, SchemeFileManager
+import configobj
+import defusedxml.ElementTree as defusedxmlET
+import defusedxml.minidom as defusedxmlMD
+from app.utils import DCFileManager, SchemeFileManager
 
 class Scheme:
     """
@@ -73,10 +73,14 @@ class Scheme:
         """
         Applies the scheme specifically to the cfg configuration file.
         """
-        source_file: str = path.join(self.scheme_path, f'{self.scheme}.cfg')
+        source_file: str = os.path.join(self.scheme_path, f'{self.scheme}.cfg')
         target_file: str = DCFileManager.get_config(self.dc_configs['cfg'])
-        source_config: ConfigObj = SchemeFileManager.get_cfg(source_file)
-        target_config: ConfigObj = SchemeFileManager.get_cfg(target_file)
+        source_config: configobj.ConfigObj = (
+            SchemeFileManager.get_cfg(source_file)
+        )
+        target_config: configobj.ConfigObj = (
+            SchemeFileManager.get_cfg(target_file)
+        )
 
         # Set new 'DarkMode' value
         target_config['DarkMode'] = (
@@ -94,7 +98,9 @@ class Scheme:
         """
         Applies the scheme specifically to the json configuration file.
         """
-        source_file: str = path.join(self.scheme_path, f'{self.scheme}.json')
+        source_file: str = (
+            os.path.join(self.scheme_path, f'{self.scheme}.json')
+        )
         target_file: str = DCFileManager.get_config(self.dc_configs['json'])
         source_config: dict = SchemeFileManager.get_json(source_file)
         target_config: dict = SchemeFileManager.get_json(target_file)
@@ -119,7 +125,7 @@ class Scheme:
         """
         Applies the scheme specifically to the xml configuration file.
         """
-        source_file: str = path.join(self.scheme_path, f'{self.scheme}.xml')
+        source_file: str = os.path.join(self.scheme_path, f'{self.scheme}.xml')
         target_file: str = DCFileManager.get_config(self.dc_configs['xml'])
 
         # Backup current configuration
@@ -128,8 +134,8 @@ class Scheme:
 
         for item in self.xml_tags:
             # Create element tree object
-            source_tree = parse(source_file)
-            target_tree = parse(target_file)
+            source_tree = defusedxmlET.parse(source_file)
+            target_tree = defusedxmlET.parse(target_file)
 
             # Get root element
             target_root = target_tree.getroot()
@@ -149,8 +155,8 @@ class Scheme:
                 )
 
             # Prettify XML
-            xml_str: str = tostring(target_root, encoding='utf-8')
-            dom = parseString(xml_str)
+            xml_str: str = defusedxmlET.tostring(target_root, encoding='utf-8')
+            dom = defusedxmlMD.parseString(xml_str)
             pretty_xml: str = dom.toprettyxml(indent='  ')
             pretty_xml = '\n'.join(
                 [line for line in pretty_xml.split('\n') if line.strip()]
@@ -170,11 +176,11 @@ class Scheme:
         """
         Verifies the scheme version of xml configuration file specifically.
         """
-        source_file: str = path.join(self.scheme_path, f'{self.scheme}.xml')
+        source_file: str = os.path.join(self.scheme_path, f'{self.scheme}.xml')
         target_file: str = DCFileManager.get_config(self.dc_configs['xml'])
 
-        source_tree = parse(source_file)
-        target_tree = parse(target_file)
+        source_tree = defusedxmlET.parse(source_file)
+        target_tree = defusedxmlET.parse(target_file)
 
         source_config_version: str | None = (
             source_tree.getroot().attrib.get('ConfigVersion')
