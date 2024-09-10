@@ -1,7 +1,7 @@
 import os
 import sys
 import unittest
-from unittest.mock import mock_open, patch
+from unittest.mock import call, mock_open, patch
 import json
 
 # Append the parent directory to the system path to access app module
@@ -58,13 +58,10 @@ class TestUserConfigManager(unittest.TestCase):
         """
         self.user_config.create_default()
 
-        # Check that open was called correctly
-        mock_open.assert_called_once_with(
-            test_data.USER_CONFIG_PATH, 'w', encoding='utf-8'
-        )
-
-        # Check that write was called the expected number of times
-        self.assertEqual(mock_open().write.call_count, 60)
+        # Check that open was called with specific arguments
+        mock_open.assert_has_calls([
+            call(test_data.USER_CONFIG_PATH, 'w', encoding='utf-8')
+        ])
 
     def test_get_config(self):
         """

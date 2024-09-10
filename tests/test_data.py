@@ -1,17 +1,57 @@
-CONFIG_CURRENT_VERSION = 2
-CONFIG_READ_VERSION = 1
+# Misc
+ASSET_PATH = 'assets\\default-user-config.json'
 DARK_MODE = False
 DC_BACKUP_CONFIGS = False
 DC_CONFIG_PATHS = {
     "cfg": "doublecmd.cfg",
     "json": "colors.json",
-    "xml": "doublecmd.xml"
+    "xml": "doublecmd.xml",
+    "test": "%USERPROFILE%"
 }
+SCHEME_NAME = 'test-scheme'
+SCHEME_PATH = './test-schemes'
+SCHEME_XML_TAGS = [
+    "Colors",
+    "Fonts"
+]
+
+# User config
+CONFIG_CURRENT_VERSION = 2
+CONFIG_READ_VERSION = 1
+USER_CONFIG_DEFAULT = {
+    "configVersion": 1,
+    "doubleCommander": {
+        "backupConfigs": True,
+        "configPaths": {
+            "cfg": "%APPDATA%\\doublecmd\\doublecmd.cfg",
+            "json": "%APPDATA%\\doublecmd\\colors.json",
+            "xml": "%APPDATA%\\doublecmd\\doublecmd.xml"
+        }
+    },
+    "schemes": {
+        "extensions": [
+            "cfg",
+            "json",
+            "xml"
+        ],
+        "path": "./schemes",
+        "xmlTags": [
+            "Colors",
+            "Fonts"
+        ]
+    }
+}
+USER_CONFIG_PATH = 'dc-themer-test.json'
+
+# DC configs
 DC_CONFIG_CFG_MOCK = {
     "cfgSource": {
         "name": "doublecmd-test-1.cfg",
         "content": "SplashForm=-1\n"
-            "DarkMode=2\n"
+          "DarkMode=2\n",
+        "schema": """SplashForm = integer
+DarkMode = integer
+"""
     },
     "cfgTarget": {
         "name": "doublecmd-test-2.cfg",
@@ -21,7 +61,7 @@ DC_CONFIG_CFG_MOCK = {
 }
 DC_CONFIG_JSON_MOCK = {
     "jsonSource": {
-        "name": "colors-test-1.cfg",
+        "name": "colors-test-1.json",
         "content": """{
   Styles : [
     {
@@ -44,10 +84,72 @@ DC_CONFIG_JSON_MOCK = {
       Attributes : ""
     }
   ]
+}""",
+        "schema": """{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "Styles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "Name": {
+            "type": "string"
+          },
+          "Log": {
+            "type": "object",
+            "properties": {
+              "InfoColor": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "ErrorColor": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "SuccessColor": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": ["InfoColor", "ErrorColor", "SuccessColor"]
+          }
+        },
+        "required": ["Name", "Log"]
+      }
+    },
+    "FileColors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "Name": {
+            "type": "string"
+          },
+          "Masks": {
+            "type": "string"
+          },
+          "Colors": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "Attributes": {
+            "type": "string"
+          }
+        },
+        "required": ["Name", "Masks", "Colors", "Attributes"]
+      }
+    }
+  },
+  "required": ["Styles", "FileColors"]
 }"""
     },
     "jsonTarget": {
-        "name": "colors-test-2.cfg",
+        "name": "colors-test-2.json",
         "content": """{
   Styles : [
     {
@@ -81,8 +183,7 @@ DC_CONFIG_XML_MOCK = {
     <UseCursorBorder>True</UseCursorBorder>
     <UseFrameCursor>False</UseFrameCursor>
   </Colors>
-</doublecmd>
-""",
+</doublecmd>""",
         "version": "15"
     },
     "xmlTarget": {
@@ -106,33 +207,3 @@ DC_CONFIG_XML_MOCK = {
         "version": "14"
     }
 }
-SCHEME_NAME = 'scheme'
-SCHEME_PATH = './schemes'
-SCHEME_XML_TAGS = [
-    "Colors",
-    "Fonts"
-]
-USER_CONFIG_DEFAULT = {
-    "configVersion": 1,
-    "doubleCommander": {
-        "backupConfigs": True,
-        "configPaths": {
-            "cfg": "%APPDATA%\\doublecmd\\doublecmd.cfg",
-            "json": "%APPDATA%\\doublecmd\\colors.json",
-            "xml": "%APPDATA%\\doublecmd\\doublecmd.xml"
-        }
-    },
-    "schemes": {
-            "extensions": [
-            "cfg",
-            "json",
-            "xml"
-        ],
-        "path": "./schemes",
-        "xmlTags": [
-            "Colors",
-            "Fonts"
-        ]
-    }
-}
-USER_CONFIG_PATH = 'dc-themer-test.json'

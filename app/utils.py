@@ -1,9 +1,9 @@
+import os
 import sys
-from configobj import ConfigObj, ConfigObjError
-from json import dump
-from json_repair import loads
-from os import listdir, path
-from shutil import copy
+import shutil
+import json
+import configobj
+import json_repair
 
 class AppUtils:
     """
@@ -24,9 +24,11 @@ class AppUtils:
         try:
             base_path: str = sys._MEIPASS
         except Exception:
-            base_path: str = path.dirname(path.dirname(path.abspath(__file__)))
+            base_path: str = (
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            )
 
-        return path.join(base_path, infile)
+        return os.path.join(base_path, infile)
 
 class DCFileManager:
     """
@@ -47,10 +49,10 @@ class DCFileManager:
             FileNotFoundError: If the configuration file does not exist.
         """
         # Define path to the config file
-        config_path = path.expandvars(dc_config)
+        config_path = os.path.expandvars(dc_config)
 
         # Check if the config file exists
-        if not path.exists(config_path):
+        if not os.path.exists(config_path):
             raise FileNotFoundError(
                 'Double Commander configuration file does not exist: '
                 f'{config_path}'
@@ -71,7 +73,7 @@ class DCFileManager:
             OSError: If an error occurs during the backup process.
         """
         try:
-            copy(file, f'{file}.backup')
+            shutil.copy(file, f'{file}.backup')
         except Exception as e:
             raise OSError(
                 f'Failed to create backup.\n\n{str(e)}'
@@ -83,7 +85,7 @@ class SchemeFileManager:
     json, xml).
     """
     @staticmethod
-    def get_cfg(infile: str) -> ConfigObj:
+    def get_cfg(infile: str) -> configobj.ConfigObj:
         """
         Reads a cfg configuration file and returns its contents as a ConfigObj.
 
@@ -97,16 +99,16 @@ class SchemeFileManager:
             ConfigObjError: If an error occurs while parsing the cfg file.
         """
         try:
-            config = ConfigObj(infile)
+            config = configobj.ConfigObj(infile)
 
             return config
-        except ConfigObjError as e:
-            raise ConfigObjError(
+        except configobj.ConfigObjError as e:
+            raise configobj.ConfigObjError(
                 f'Failed to parse the configuration.\n\n{str(e)}'
             ) from e
 
     @staticmethod
-    def set_cfg(config: ConfigObj, outfile: str) -> None:
+    def set_cfg(config: configobj.ConfigObj, outfile: str) -> None:
         """
         Writes a configuration object to a cfg file.
 
@@ -145,7 +147,7 @@ class SchemeFileManager:
         try:
             with open(infile, 'r') as json_file:
                 file_content = json_file.read()
-            json_data = loads(file_content)
+            json_data = json_repair.loads(file_content)
 
             # Ensure json_data is a dictionary
             if not isinstance(json_data, dict):
@@ -174,7 +176,7 @@ class SchemeFileManager:
         """
         try:
             with open(outfile, 'w', encoding='utf-8') as json_file:
-                dump(json_data, json_file, ensure_ascii=False, indent=2)
+                json.dump(json_data, json_file, ensure_ascii=False, indent=2)
         except Exception as e:
             raise OSError(
                 f'Failed to write configuration.\n\n{str(e)}'
@@ -220,22 +222,22 @@ class SchemeFileManager:
                                files are missing.
         """
         # Verify the existence of the scheme directory
-        if not path.exists(scheme_path):
+        if not os.path.exists(scheme_path):
             raise FileNotFoundError(
                 f'The schemes directory does not exist: {scheme_path}'
             )
 
         # Retrieve all files in the directory
         files = [
-            file for file in listdir(scheme_path) if path.isfile(
-                path.join(scheme_path, file)
+            file for file in os.listdir(scheme_path) if os.path.isfile(
+                os.path.join(scheme_path, file)
             )
         ]
 
         # Create a dictionary to group files by scheme name
         scheme_files = {}
         for file in files:
-            name, ext = path.splitext(file)
+            name, ext = os.path.splitext(file)
             if ext[1:] in scheme_exts:   # Remove dot from extension
                 if name not in scheme_files:
                     scheme_files[name] = []
