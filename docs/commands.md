@@ -1,8 +1,19 @@
 # Commands
 
+## Install dependencies
+```sh
+pip install -r app/requirements.txt
+pip install -r tests/requirements.txt
+```
+
 ## Run app
 ```sh
-python app/main.py
+python -m app.main
+```
+
+## Run tests
+```sh
+python tests/run_tests.py
 ```
 
 ## Generate requirements
