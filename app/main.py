@@ -1,12 +1,12 @@
 import tkinter as tk
-from config import (
+from tkinter.messagebox import showerror
+from app.config import (
     APP_NAME, ICON_PATH, DEFAULT_USER_CONFIG, USER_CONFIG_PATH,
     USER_CONFIG_VERSION, MAIN_WINDOW_HEIGHT, MAIN_WINDOW_WIDTH
 )
-from gui import AppFrame, AppMenuBar
-from tkinter.messagebox import showerror
-from user_config import UserConfigManager
-from utils import AppUtils
+from app.gui import AppFrame, AppMenuBar
+from app.user_config import UserConfigManager
+from app.utils import AppUtils
 
 class App(tk.Tk):
     """

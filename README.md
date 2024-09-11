@@ -18,7 +18,5 @@ For the time being DC Themer is released as Windows binary, but feel free to pul
 1. Download [DC Themer latest version](https://github.com/t0mmili/dc-themer/releases/latest).
 2. Download [themes]((https://github.com/t0mmili/dc-themes)) from my other GitHub repo.
 3. Put **schemes** folder next to **dc-themer.exe**.
-   > **NOTE**  
-   > Keep the folder name as is.
 4. Run **dc-themer.exe**.
 5. Profit!

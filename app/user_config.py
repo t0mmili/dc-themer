@@ -1,6 +1,6 @@
-from json import dump
-from json_repair import loads
-from os import path
+import os
+import json
+import json_repair
 
 class UserConfigManager:
     """
@@ -23,7 +23,7 @@ class UserConfigManager:
         Returns:
             bool: True if the file exists and is a json file, False otherwise.
         """
-        return path.isfile(
+        return os.path.isfile(
             self.user_config_path
         ) and self.user_config_path.endswith('.json')
 
@@ -39,7 +39,7 @@ class UserConfigManager:
             with open(
                 self.user_config_path, 'w', encoding='utf-8'
             ) as json_file:
-                dump(
+                json.dump(
                     self.default_user_config, json_file, ensure_ascii=False,
                     indent=2
                 )
@@ -64,7 +64,7 @@ class UserConfigManager:
         try:
             with open(infile, 'r') as json_file:
                 file_content = json_file.read()
-            json_data = loads(file_content)
+            json_data = json_repair.loads(file_content)
 
             # Ensure json_data is a dictionary
             if not isinstance(json_data, dict):

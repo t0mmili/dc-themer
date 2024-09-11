@@ -1,17 +1,17 @@
+import os
 import platform
+import subprocess
+from webbrowser import open
 import tkinter as tk
+from tkinter import ttk
 import tkinter.font as tkFont
-from config import (
+from tkinter.messagebox import showerror, showinfo
+from app.config import (
     ABOUT_TITLE_FONT_SIZE, ABOUT_TITLE_FONT_WEIGHT, APP_AUTHOR, APP_NAME,
     APP_VERSION, DEV_YEARS, ICON_PATH, LICENSE_PATH, REPO_URL
 )
-from os import startfile
-from scheme import Scheme
-from subprocess import run
-from tkinter import ttk
-from tkinter.messagebox import showerror, showinfo
-from utils import AppUtils, SchemeFileManager
-from webbrowser import open
+from app.scheme import Scheme
+from app.utils import AppUtils, SchemeFileManager
 
 class AppMenuBar:
     """
@@ -71,11 +71,11 @@ class AppMenuBar:
         Opens LICENSE file using default system application.
         """
         if platform.system() == 'Windows':   # Windows
-            startfile(LICENSE_PATH)
+            os.startfile(LICENSE_PATH)
         elif platform.system() == 'Darwin':   # macOS
-            run(['open', LICENSE_PATH])
+            subprocess.run(['open', LICENSE_PATH])
         else:   # Linux and others
-            run(['xdg-open', LICENSE_PATH])
+            subprocess.run(['xdg-open', LICENSE_PATH])
 
     def show_about_window(self) -> None:
         """
