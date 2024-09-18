@@ -11,7 +11,7 @@ from app.config import (
     APP_VERSION, DEV_YEARS, ICON_PATH, LICENSE_PATH, REPO_URL
 )
 from app.scheme import Scheme
-from app.utils import AppUtils, SchemeFileManager
+from app.utils import AppUtils, DCFileManager, SchemeFileManager
 
 class AppMenuBar:
     """
@@ -26,10 +26,12 @@ class AppMenuBar:
         parent (tk.Tk): The parent widget, typically an instance of Tk or
                         a top-level window.
     """
-    def __init__(self, parent: tk.Tk) -> None:
+    def __init__(self, parent: tk.Tk, user_config: dict) -> None:
         """
         Initializes the AppMenuBar class by setting up the Menu Bar items.
         """
+        self.user_config: dict = user_config
+
         # Initialize Menu Bar
         self.menu_bar: tk.Menu = tk.Menu(parent)
 
@@ -37,6 +39,14 @@ class AppMenuBar:
         self.file_menu: tk.Menu = tk.Menu(self.menu_bar, tearoff=False)
         self.file_menu.add_command(label='Exit', command=lambda: parent.quit())
         self.menu_bar.add_cascade(label='File', menu=self.file_menu)
+
+        # Add Menu Bar items: Tools
+        self.tools_menu: tk.Menu = tk.Menu(self.menu_bar, tearoff=False)
+        self.tools_menu.add_command(
+            label='Create scheme',
+            command=self.show_create_scheme_window
+        )
+        self.menu_bar.add_cascade(label='Tools', menu=self.tools_menu)
 
         # Add Menu Bar items: Help
         self.help_menu: tk.Menu = tk.Menu(self.menu_bar, tearoff=False)
@@ -49,6 +59,31 @@ class AppMenuBar:
             command=self.show_about_window
         )
         self.menu_bar.add_cascade(label='Help', menu=self.help_menu)
+
+    def calculate_entry_width(self, entries: list[tk.StringVar]) -> int:
+        """
+        Calculates the Entry Widget width based on max entries length from the
+        list.
+
+        Args:
+            entries (list[tk.StringVar]): The entries list.
+
+        Returns:
+            int: The Entry Widget width.
+        """
+        font: tkFont.Font = tkFont.Font(family='TkDefaultFont')
+
+        # Choose the longest entry
+        longest_entry: str = max((entry.get() for entry in entries), key=len)
+
+        text_width: int = font.measure(longest_entry)
+        text_length: int = len(longest_entry)
+
+        avg_char_width: float = text_width / text_length
+
+        entry_width: int = int(text_width / avg_char_width) + 5
+
+        return entry_width
 
     def center_window(self, window: tk.Toplevel) -> None:
         """
@@ -66,6 +101,12 @@ class AppMenuBar:
         center_y: int = (screen_height - height) // 2
         window.geometry(f'{width}x{height}+{center_x}+{center_y}')
 
+    def create_scheme(self) -> None:
+        """
+        Creates the new scheme from current DC configuration.
+        """
+        pass
+
     def open_license(self) -> None:
         """
         Opens LICENSE file using default system application.
@@ -76,6 +117,99 @@ class AppMenuBar:
             subprocess.run(['open', LICENSE_PATH])
         else:   # Linux and others
             subprocess.run(['xdg-open', LICENSE_PATH])
+
+    def show_create_scheme_window(self) -> None:
+        """
+        Sets and displays Create scheme modal window.
+        """
+        create_scheme_window: tk.Toplevel = tk.Toplevel()
+        icon_path: str = AppUtils.get_asset_path(ICON_PATH)
+
+        # Define and set config paths variables
+        cfg_file: tk.StringVar = tk.StringVar()
+        xml_file: tk.StringVar = tk.StringVar()
+        json_file: tk.StringVar = tk.StringVar()
+
+        cfg_file.set(DCFileManager.get_config(
+            self.user_config['doubleCommander']['configPaths']['cfg'])
+        )
+        xml_file.set(DCFileManager.get_config(
+            self.user_config['doubleCommander']['configPaths']['xml'])
+        )
+        json_file.set(DCFileManager.get_config(
+            self.user_config['doubleCommander']['configPaths']['json'])
+        )
+
+        # Calculate Entry Widget width
+        entry_width: int = self.calculate_entry_width(
+            [cfg_file, xml_file, json_file]
+        )
+
+        # Set window properties
+        create_scheme_window.iconbitmap(icon_path)
+        create_scheme_window.resizable(False, False)
+        create_scheme_window.title('Create scheme')
+
+        create_scheme_window.columnconfigure(0, weight=1)
+        create_scheme_window.columnconfigure(1, weight=3)
+
+        # Path to doublecmd.cfg
+        ttk.Label(
+            create_scheme_window, text='\'doublecmd.cfg\' path:'
+        ).grid(column=0, row=0, sticky=tk.W, padx=10, pady=10)
+
+        cfg_path: ttk.Entry = ttk.Entry(
+            create_scheme_window, state='readonly', textvariable=cfg_file,
+            width=entry_width
+        )
+        cfg_path.grid(column=1, row=0, sticky=tk.E, padx=10, pady=10)
+
+        # Path to doublecmd.xml
+        ttk.Label(
+            create_scheme_window, text='\'doublecmd.xml\' path:'
+        ).grid(column=0, row=1, sticky=tk.W, padx=10, pady=5)
+
+        xml_path: ttk.Entry = ttk.Entry(
+            create_scheme_window, state='readonly', textvariable=xml_file,
+            width=entry_width
+        )
+        xml_path.grid(column=1, row=1, sticky=tk.E, padx=10, pady=5)
+
+        # Path to colors.json
+        ttk.Label(
+            create_scheme_window, text='\'colors.json\' path:'
+        ).grid(column=0, row=2, sticky=tk.W, padx=10, pady=10)
+
+        json_path: ttk.Entry = ttk.Entry(
+            create_scheme_window, state='readonly', textvariable=json_file,
+            width=entry_width
+        )
+        json_path.grid(column=1, row=2, sticky=tk.E, padx=10, pady=10)
+
+        # Scheme name entry
+        ttk.Label(
+            create_scheme_window, text='Scheme name:'
+        ).grid(column=0, row=3, sticky=tk.W, padx=10, pady=5)
+
+        scheme_name: ttk.Entry = ttk.Entry(
+            create_scheme_window, width=entry_width
+        )
+        scheme_name.grid(column=1, row=3, sticky=tk.E, padx=10, pady=5)
+
+        ttk.Button(
+            create_scheme_window, text='Export', command=self.create_scheme
+        ).grid(column=0, row=4, sticky=tk.W, padx=10, pady=10)
+        ttk.Button(
+            create_scheme_window, text='Cancel',
+            command=lambda: create_scheme_window.destroy()
+        ).grid(column=1, row=4, sticky=tk.E, padx=10, pady=10)
+
+        self.center_window(create_scheme_window)
+
+        # Make window modal and set focus
+        create_scheme_window.grab_set()
+        create_scheme_window.focus_set()
+        create_scheme_window.wait_window()
 
     def show_about_window(self) -> None:
         """

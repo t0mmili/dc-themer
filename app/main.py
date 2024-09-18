@@ -35,7 +35,7 @@ class App(tk.Tk):
         self.title(APP_NAME)
 
         # Create an instance of Menu Bar
-        self.menu = AppMenuBar(self)
+        self.menu = AppMenuBar(self, user_config)
         self.config(menu=self.menu.menu_bar)
 
         # Center the window on the screen
