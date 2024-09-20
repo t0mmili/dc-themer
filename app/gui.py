@@ -216,13 +216,15 @@ class AppMenuBar:
         Sets and displays About modal window.
         """
         about_window: tk.Toplevel = tk.Toplevel()
-
         icon_path: str = AppUtils.get_asset_path(ICON_PATH)
 
         # Set window properties
         about_window.iconbitmap(icon_path)
         about_window.resizable(False, False)
         about_window.title('About')
+
+        about_window.columnconfigure(0, weight=1)
+        about_window.columnconfigure(1, weight=1)
 
         # Set font properties for app name and version
         title_font: tkFont.Font = tkFont.Font(
@@ -236,21 +238,18 @@ class AppMenuBar:
 
         ttk.Label(
             about_window, text=f'{APP_NAME} v{APP_VERSION}', font=title_font,
-            justify=tk.LEFT, padding=(10,10)
-        ).pack(anchor='w')
+            justify=tk.LEFT
+        ).grid(column=0, row=0, columnspan=2, sticky=tk.W, padx=10, pady=10)
         ttk.Label(
-            about_window, text=about_message, justify=tk.LEFT, padding=(10,0)
-        ).pack(anchor='w')
+            about_window, text=about_message, justify=tk.LEFT
+        ).grid(column=0, row=1, columnspan=2, sticky=tk.W, padx=10, pady=0)
 
-        button_frame = ttk.Frame(about_window)
-
-        button_frame.pack(pady=10)
         ttk.Button(
-            button_frame, text='License', command=self.open_license
-        ).pack(side=tk.LEFT, padx=5)
+            about_window, text='License', command=self.open_license
+        ).grid(column=0, row=2, sticky=tk.E, padx=10, pady=10)
         ttk.Button(
-            button_frame, text='Close', command=lambda: about_window.destroy()
-        ).pack(side=tk.LEFT, padx=5)
+            about_window, text='Close', command=lambda: about_window.destroy()
+        ).grid(column=1, row=2, sticky=tk.W, padx=10, pady=10)
 
         self.center_window(about_window)
 
