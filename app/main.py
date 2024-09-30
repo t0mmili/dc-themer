@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter.messagebox import showerror
 from app.config import (
     APP_NAME, ICON_PATH, DEFAULT_USER_CONFIG, USER_CONFIG_PATH,
-    USER_CONFIG_VERSION, MAIN_WINDOW_HEIGHT, MAIN_WINDOW_WIDTH
+    USER_CONFIG_VERSION
 )
 from app.gui import AppFrame, AppMenuBar
 from app.user_config import UserConfigManager
@@ -15,10 +15,6 @@ class App(tk.Tk):
     This class inherits from tkinter's Tk class and sets up the application
     window, including setting the window icon, title, and size, and
     initializing the menu bar and main application frame.
-
-    Methods:
-        center_window(width, height): Centers the window on the screen with
-                                      the given dimensions.
     """
     def __init__(self) -> None:
         """
@@ -35,25 +31,11 @@ class App(tk.Tk):
         self.title(APP_NAME)
 
         # Create an instance of Menu Bar
-        self.menu = AppMenuBar(self)
+        self.menu = AppMenuBar(self, user_config)
         self.config(menu=self.menu.menu_bar)
 
         # Center the window on the screen
-        self.center_window(MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT)
-
-    def center_window(self, width: int, height: int) -> None:
-        """
-        Centers the window on the screen using the specified width and height.
-
-        Args:
-            width (int): The width of the window.
-            height (int): The height of the window.
-        """
-        screen_width: int = self.winfo_screenwidth()
-        screen_height: int = self.winfo_screenheight()
-        center_x: int = (screen_width - width) // 2
-        center_y: int = (screen_height - height) // 2
-        self.geometry(f'{width}x{height}+{center_x}+{center_y}')
+        self.eval('tk::PlaceWindow . center')
 
 def init_user_config() -> dict:
     """

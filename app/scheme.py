@@ -48,7 +48,7 @@ class Scheme:
             dc_configs (dict[str, str]): A dictionary containing DC
                                          configuration file types and their
                                          paths.
-            dc_configs_backup (bool): A flag to backup DC  configuration before
+            dc_configs_backup (bool): A flag to backup DC configuration before
                                       scheme apply.
             auto_dark_mode (bool): A flag to force auto dark mode if True.
             xml_tags (list[str]): A list of XML tags to be modified in xml
@@ -201,3 +201,70 @@ class Scheme:
                     'files.'
                 )
             )
+
+class SchemeCreator:
+    """
+    A class to create color schemes from configuration files.
+
+    Attributes:
+        scheme (str): The name of the scheme.
+        dc_cfg_config_path (str): The path to the DC cfg configuration file.
+        dc_json_config_path (str): The path to the DC json configuration file.
+        dc_xml_config_path (str): The path to the DC xml configuration file.
+
+    Methods:
+        create_scheme(): Creates the scheme to all configuration files
+                         (cfg, json, xml).
+        create_scheme_cfg(): Creates the scheme specifically to the cfg
+                             configuration file.
+        create_scheme_json(): Creates the scheme specifically to the json
+                              configuration file.
+        create_scheme_xml(): Creates the scheme specifically to the xml
+                             configuration file.
+    """
+    def __init__(
+        self, scheme: str, dc_cfg_config_path: str, dc_json_config_path: str,
+        dc_xml_config_path: str
+    ) -> None:
+        """
+        Constructs all the necessary attributes for the SchemeCreator object.
+
+        Args:
+            scheme (str): The name of the scheme.
+            dc_cfg_config_path (str): The path to the DC cfg configuration
+                                      file.
+            dc_json_config_path (str): The path to the DC json configuration
+                                       file.
+            dc_xml_config_path (str): The path to the DC xml configuration
+                                      file.
+        """
+        self.scheme: str = scheme
+        self.dc_cfg_config_path: str = dc_cfg_config_path
+        self.dc_json_config_path: str = dc_json_config_path
+        self.dc_xml_config_path: str = dc_xml_config_path
+
+    def create_scheme(self) -> None:
+        """
+        Creates the scheme from all configuration files (cfg, json, xml).
+        """
+        self.create_scheme_cfg()
+        self.create_scheme_json()
+        self.create_scheme_xml()
+
+    def create_scheme_cfg(self) -> None:
+        """
+        Creates the scheme specifically from the cfg configuration file.
+        """
+        pass
+
+    def create_scheme_json(self) -> None:
+        """
+        Creates the scheme specifically from the json configuration file.
+        """
+        pass
+
+    def create_scheme_xml(self) -> None:
+        """
+        Creates the scheme specifically from the xml configuration file.
+        """
+        pass
