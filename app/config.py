@@ -13,8 +13,6 @@ ICON_PATH = './assets/dct-icon-v3.ico'
 # GUI
 ABOUT_TITLE_FONT_SIZE = 12
 ABOUT_TITLE_FONT_WEIGHT = 'bold'
-MAIN_WINDOW_HEIGHT = 140
-MAIN_WINDOW_WIDTH = 285
 
 # User config
 USER_CONFIG_PATH = 'dc-themer.json'

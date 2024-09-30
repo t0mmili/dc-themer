@@ -4,11 +4,31 @@ import shutil
 import json
 import configobj
 import json_repair
+import tkinter as tk
+from typing import Union
 
 class AppUtils:
     """
     Provides static methods that can be used throughout the application.
     """
+    @staticmethod
+    def center_window(window: Union[tk.Tk, tk.Toplevel]) -> None:
+        """
+        Centers the window on the screen.
+
+        Args:
+            window (Union[tk.Tk, tk.Toplevel]): The window object to be
+                                                centered.
+        """
+        window.update_idletasks()
+        width: int = window.winfo_reqwidth()
+        height: int = window.winfo_reqheight()
+        screen_width: int = window.winfo_screenwidth()
+        screen_height: int = window.winfo_screenheight()
+        center_x: int = (screen_width - width) // 2
+        center_y: int = (screen_height - height) // 2
+        window.geometry(f'{width}x{height}+{center_x}+{center_y}')
+
     @staticmethod
     def get_asset_path(infile: str) -> str:
         """

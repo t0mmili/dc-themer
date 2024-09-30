@@ -85,22 +85,6 @@ class AppMenuBar:
 
         return entry_width
 
-    def center_window(self, window: tk.Toplevel) -> None:
-        """
-        Centers the window on the screen.
-
-        Args:
-            window (tk.Toplevel): Window object.
-        """
-        window.update_idletasks()
-        width: int = window.winfo_width()
-        height: int = window.winfo_height()
-        screen_width: int = window.winfo_screenwidth()
-        screen_height: int = window.winfo_screenheight()
-        center_x: int = (screen_width - width) // 2
-        center_y: int = (screen_height - height) // 2
-        window.geometry(f'{width}x{height}+{center_x}+{center_y}')
-
     def create_scheme(self) -> None:
         """
         Creates the new scheme from current DC configuration.
@@ -111,7 +95,8 @@ class AppMenuBar:
             showinfo(
                 title='Info',
                 message=(
-                    f'Scheme \'{self.scheme_name_var.get()}\' exported successfully.'
+                    f'Scheme \'{self.scheme_name_var.get()}\' exported '
+                    'successfully.'
                 )
             )
         except Exception as e:
@@ -226,7 +211,7 @@ class AppMenuBar:
             command=lambda: create_scheme_window.destroy()
         ).grid(column=1, row=4, sticky=tk.E, padx=10, pady=10)
 
-        self.center_window(create_scheme_window)
+        AppUtils.center_window(create_scheme_window)
 
         # Make window modal and set focus
         create_scheme_window.grab_set()
@@ -273,7 +258,7 @@ class AppMenuBar:
             about_window, text='Close', command=lambda: about_window.destroy()
         ).grid(column=1, row=2, sticky=tk.W, padx=10, pady=10)
 
-        self.center_window(about_window)
+        AppUtils.center_window(about_window)
 
         # Make window modal and set focus
         about_window.grab_set()
@@ -288,13 +273,7 @@ class AppFrame(ttk.Frame):
         scheme_var (StringVar): Variable to hold the selected scheme name.
         dark_mode_var (BooleanVar): Variable to store the state of
                                     the dark mode checkbox.
-        scheme_selector_label (ttk.Label): Label for the scheme selector
-                                           dropdown.
         scheme_selector (ttk.OptionMenu): Dropdown menu to select a scheme.
-        dark_mode_tick (ttk.Checkbutton): Checkbox to enable or disable auto
-                                          dark mode.
-        apply_button (ttk.Button): Button to verify and apply the selected
-                                   scheme.
 
     Args:
         container (tk.Tk): The parent widget, typically an instance of Tk or
@@ -309,8 +288,8 @@ class AppFrame(ttk.Frame):
         super().__init__(container)
         self.user_config: dict = user_config
 
+        self.grid(row=0, column=0, sticky=tk.NSEW, padx=10, pady=10)
         self.setup_widgets()
-        self.grid(padx=10, pady=10, sticky=tk.NSEW)
 
     def initialize_scheme(self) -> None:
         """
@@ -351,23 +330,30 @@ class AppFrame(ttk.Frame):
         self.scheme_var: tk.StringVar = tk.StringVar(self)
 
         # Scheme selector
-        schemes = SchemeFileManager.list_schemes(
+        schemes: list[str] = SchemeFileManager.list_schemes(
             self.user_config['schemes']['path'],
             self.user_config['schemes']['extensions']
+        )
+        longest_scheme_name: int = len(
+            max((scheme for scheme in schemes), key=len)
         )
 
         ttk.Label(
             self, text='Select scheme:'
-        ).grid(column=0, row=0, sticky=tk.W, padx=5, pady=0)
-        ttk.OptionMenu(
+        ).grid(column=1, row=1, sticky=tk.W, padx=(0,10), pady=(0,15))
+        scheme_selector = ttk.OptionMenu(
             self, self.scheme_var, schemes[0], *schemes
-        ).grid(column=1, row=0, padx=5, pady=5)
+        )
+        scheme_selector.grid(
+            column=2, row=1, sticky=tk.W, padx=(0,50), pady=(0,15)
+        )
+        scheme_selector.configure(width=longest_scheme_name)
 
         # Dark Mode checkbox
         ttk.Checkbutton(
             self, text='Force auto Dark mode', variable=self.dark_mode_var,
             onvalue=True, offvalue=False, takefocus=False
-        ).grid(column=0, row=1, columnspan=2, sticky=tk.W, padx=5, pady=5)
+        ).grid(column=1, row=2, columnspan=2, sticky=tk.W, pady=(0,20))
 
         # Initialize class, verify and apply scheme
         ttk.Button(
@@ -375,7 +361,7 @@ class AppFrame(ttk.Frame):
                 self.initialize_scheme(), self.verify_scheme(),
                 self.modify_scheme()
             )
-        ).grid(column=0, row=2, columnspan=2, sticky=tk.W, padx=5, pady=10)
+        ).grid(column=1, row=3, columnspan=2, sticky=tk.W)
 
     def verify_scheme(self) -> None:
         """
