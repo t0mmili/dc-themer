@@ -111,6 +111,7 @@ class AppMenuBar:
         """
         self.scheme_creator = SchemeCreator(
             self.scheme_name_var.get(),
+            self.user_config['schemes']['path'],
             self.cfg_file_var.get(),
             self.json_file_var.get(),
             self.xml_file_var.get()

@@ -208,6 +208,7 @@ class SchemeCreator:
 
     Attributes:
         scheme (str): The name of the scheme.
+        scheme_path (str): The file path where the scheme files are located.
         dc_cfg_config_path (str): The path to the DC cfg configuration file.
         dc_json_config_path (str): The path to the DC json configuration file.
         dc_xml_config_path (str): The path to the DC xml configuration file.
@@ -223,14 +224,16 @@ class SchemeCreator:
                              configuration file.
     """
     def __init__(
-        self, scheme: str, dc_cfg_config_path: str, dc_json_config_path: str,
-        dc_xml_config_path: str
+        self, scheme: str, scheme_path: str, dc_cfg_config_path: str,
+        dc_json_config_path: str, dc_xml_config_path: str
     ) -> None:
         """
         Constructs all the necessary attributes for the SchemeCreator object.
 
         Args:
             scheme (str): The name of the scheme.
+            scheme_path (str): The file path where the scheme files are
+                               located.
             dc_cfg_config_path (str): The path to the DC cfg configuration
                                       file.
             dc_json_config_path (str): The path to the DC json configuration
@@ -239,6 +242,7 @@ class SchemeCreator:
                                       file.
         """
         self.scheme: str = scheme
+        self.scheme_path: str = scheme_path
         self.dc_cfg_config_path: str = dc_cfg_config_path
         self.dc_json_config_path: str = dc_json_config_path
         self.dc_xml_config_path: str = dc_xml_config_path
@@ -255,7 +259,18 @@ class SchemeCreator:
         """
         Creates the scheme specifically from the cfg configuration file.
         """
-        pass
+        source_file: str = DCFileManager.get_config(self.dc_cfg_config_path)
+        target_file: str = os.path.join(self.scheme_path, f'{self.scheme}.cfg')
+        source_config: configobj.ConfigObj = (
+            SchemeFileManager.get_cfg(source_file)
+        )
+        target_config = configobj.ConfigObj()
+
+        # Preserve only selected config keys
+        target_config["DarkMode"] = source_config["DarkMode"]
+
+        # Save DC cfg config file
+        SchemeFileManager.set_cfg(target_config, target_file)
 
     def create_scheme_json(self) -> None:
         """
