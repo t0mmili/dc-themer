@@ -114,7 +114,8 @@ class AppMenuBar:
             self.user_config['schemes']['path'],
             self.cfg_file_var.get(),
             self.json_file_var.get(),
-            self.xml_file_var.get()
+            self.xml_file_var.get(),
+            0
         )
 
     def open_license(self) -> None:

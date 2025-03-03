@@ -212,6 +212,7 @@ class SchemeCreator:
         dc_cfg_config_path (str): The path to the DC cfg configuration file.
         dc_json_config_path (str): The path to the DC json configuration file.
         dc_xml_config_path (str): The path to the DC xml configuration file.
+        dark_mode (int): The dark mode flag (1 - auto, 2 - on, 3 - off).
 
     Methods:
         create_scheme(): Creates the scheme to all configuration files
@@ -225,7 +226,7 @@ class SchemeCreator:
     """
     def __init__(
         self, scheme: str, scheme_path: str, dc_cfg_config_path: str,
-        dc_json_config_path: str, dc_xml_config_path: str
+        dc_json_config_path: str, dc_xml_config_path: str, dark_mode: int
     ) -> None:
         """
         Constructs all the necessary attributes for the SchemeCreator object.
@@ -240,12 +241,14 @@ class SchemeCreator:
                                        file.
             dc_xml_config_path (str): The path to the DC xml configuration
                                       file.
+            dark_mode (int): The dark mode flag (1 - auto, 2 - on, 3 - off).
         """
         self.scheme: str = scheme
         self.scheme_path: str = scheme_path
         self.dc_cfg_config_path: str = dc_cfg_config_path
         self.dc_json_config_path: str = dc_json_config_path
         self.dc_xml_config_path: str = dc_xml_config_path
+        self.dark_mode: int = dark_mode
 
     def create_scheme(self) -> None:
         """
@@ -253,7 +256,7 @@ class SchemeCreator:
         """
         self.create_scheme_cfg()
         self.create_scheme_json()
-        self.create_scheme_xml()
+        # self.create_scheme_xml()
 
     def create_scheme_cfg(self) -> None:
         """
@@ -266,17 +269,46 @@ class SchemeCreator:
         )
         target_config = configobj.ConfigObj()
 
-        # Preserve only selected config keys
-        target_config["DarkMode"] = source_config["DarkMode"]
+        # Preserve only DarkMode key
+        target_config['DarkMode'] = source_config['DarkMode']
+        self.dark_mode = int(str(target_config['DarkMode']))
 
-        # Save DC cfg config file
+        # Save cfg scheme file
         SchemeFileManager.set_cfg(target_config, target_file)
 
     def create_scheme_json(self) -> None:
         """
         Creates the scheme specifically from the json configuration file.
         """
-        pass
+        source_file: str = DCFileManager.get_config(self.dc_json_config_path)
+        target_file: str = os.path.join(
+            self.scheme_path, f'{self.scheme}.json'
+        )
+        source_config: dict = SchemeFileManager.get_json(source_file)
+        target_config = {}
+
+        # Attach Style(s) properties
+        match self.dark_mode:
+            case 1:
+                target_config['Styles'] = source_config['Styles']
+            case 2:
+                target_config['Styles'] = [
+                    style for style in source_config['Styles']
+                        if style['Name'] == "Dark"
+                ]
+            case 3:
+                target_config['Styles'] = [
+                    style for style in source_config['Styles']
+                        if style['Name'] == "Light"
+                ]
+            case _:
+                raise ValueError(f'Invalid dark mode value: {self.dark_mode}')
+
+        # Attach FileColors property
+        target_config['FileColors'] = source_config['FileColors']
+
+        # Save json scheme file
+        SchemeFileManager.set_json(target_config, target_file)
 
     def create_scheme_xml(self) -> None:
         """
