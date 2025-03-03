@@ -4,12 +4,14 @@
 
 | Item | Details | Priority | Notes |
 |---|---|---|---|
-| Scheme export | Allow to export scheme from current DC config. | High ||
+| Scheme export | - Export scheme from current DC config.<br>- Warning that scheme with the same name exists.<br>- Warning that scheme name is empty.<br>- Allowed chars in name only.<br>- Only save files if all are successfully generated. | High ||
+| Scheme apply | - Only save files if all are successfully updated.<br>- Detailed message with performed actions, e.g. config backup. | Medium ||
 | User config | - ~~Implement config in json format.~~<br>- ~~Create default, if doesn't exist, on app start.~~<br>- In-app window to modify.<br>- ~~Versioning, in case new config values appear in the future.~~ | Medium ||
 | Theme verification | Before applying, theme files should be verified against schemas (cfg, json, xml).<br>Some of it is already implemented in unit tests.<br>Schemas should be in separate files. | Medium ||
+| Linux compatibility | Adjust code to run in Linux, including WSL machines. | Medium ||
+| Scheme delete | Button or menu item to delete selected scheme files. | Low ||
 | Default config creation summary | Add info box. | Low | If displayed before root window, root will loose focus. Need to be implemented with different approach. |
 | **doublecmd.xml** version verification | - Config key to enable/disable verification (?).<br>- Separate menu item to run verification. | Low ||
-| Scheme apply summary | Detailed message with performed actions, e.g. DC config backup. | Low ||
 
 ## Testing
 
