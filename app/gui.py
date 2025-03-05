@@ -115,7 +115,8 @@ class AppMenuBar:
             self.cfg_file_var.get(),
             self.json_file_var.get(),
             self.xml_file_var.get(),
-            0
+            0,
+            self.user_config['schemes']['xmlTags']
         )
 
     def open_license(self) -> None:
@@ -196,10 +197,13 @@ class AppMenuBar:
         ttk.Label(
             create_scheme_window, text='Scheme name:'
         ).grid(column=0, row=3, sticky=tk.W, padx=10, pady=5)
-        ttk.Entry(
+        scheme_name_entry = ttk.Entry(
             create_scheme_window, textvariable=self.scheme_name_var,
             width=entry_width
-        ).grid(column=1, row=3, sticky=tk.E, padx=10, pady=5)
+        )
+        scheme_name_entry.grid(
+            column=1, row=3, sticky=tk.E, padx=10, pady=5
+        )
 
         # Initialize class, create scheme
         ttk.Button(
@@ -215,9 +219,11 @@ class AppMenuBar:
 
         AppUtils.center_window(create_scheme_window)
 
-        # Make window modal and set focus
+        # Set focus on Scheme name entry
+        scheme_name_entry.focus_set()
+        
+        # Make window modal
         create_scheme_window.grab_set()
-        create_scheme_window.focus_set()
         create_scheme_window.wait_window()
 
     def show_about_window(self) -> None:
