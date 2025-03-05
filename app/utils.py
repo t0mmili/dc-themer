@@ -203,19 +203,19 @@ class SchemeFileManager:
             ) from e
 
     @staticmethod
-    def set_xml(xml_data: str, outfile: str) -> None:
+    def set_xml(xml_data: bytes, outfile: str) -> None:
         """
         Writes xml data to a file.
 
         Args:
-            xml_data (str): The xml data to write.
+            xml_data (bytes): The xml data to write.
             outfile (str): The path to the output file.
 
         Raises:
             OSError: If an error occurs while writing to the file.
         """
         try:
-            with open(outfile, 'w', encoding='utf-8') as xml_file:
+            with open(outfile, 'wb') as xml_file:
                 xml_file.write(xml_data)
         except Exception as e:
             raise OSError(

@@ -132,14 +132,14 @@ class Scheme:
         if self.dc_configs_backup:
             DCFileManager.backup_config(target_file)
 
+        # Create element tree object
+        source_tree = defusedxmlET.parse(source_file)
+        target_tree = defusedxmlET.parse(target_file)
+
+        # Get target root element
+        target_root = target_tree.getroot()
+
         for item in self.xml_tags:
-            # Create element tree object
-            source_tree = defusedxmlET.parse(source_file)
-            target_tree = defusedxmlET.parse(target_file)
-
-            # Get root element
-            target_root = target_tree.getroot()
-
             source_tag = source_tree.find(f'./{item}')
             target_tag = target_tree.find(f'./{item}')
 
@@ -154,16 +154,18 @@ class Scheme:
                     'configuration data.'
                 )
 
-            # Prettify XML
-            xml_str: str = defusedxmlET.tostring(target_root, encoding='utf-8')
-            dom = defusedxmlMD.parseString(xml_str)
-            pretty_xml: str = dom.toprettyxml(indent='  ')
-            pretty_xml = '\n'.join(
-                [line for line in pretty_xml.split('\n') if line.strip()]
-            )
+        # Prettify XML
+        xml_str: bytes = defusedxmlET.tostring(
+            target_root, encoding='utf-8'
+        )
+        dom = defusedxmlMD.parseString(xml_str.decode('utf-8'))
+        pretty_xml: bytes = dom.toprettyxml(indent='  ', encoding='utf-8')
+        pretty_xml = b'\n'.join(
+            [line for line in pretty_xml.split(b'\n') if line.strip()]
+        )
 
-            # Save modified DC xml config file
-            SchemeFileManager.set_xml(pretty_xml, target_file)
+        # Save modified DC xml config file
+        SchemeFileManager.set_xml(pretty_xml, target_file)
 
     def verify_scheme(self) -> None:
         """
