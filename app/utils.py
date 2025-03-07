@@ -165,7 +165,7 @@ class SchemeFileManager:
             TypeError: If file does not contain valid json object data.
         """
         try:
-            with open(infile, 'r') as json_file:
+            with open(infile, 'r', encoding='utf-8') as json_file:
                 file_content = json_file.read()
             json_data = json_repair.loads(file_content)
 

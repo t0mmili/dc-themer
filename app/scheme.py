@@ -194,8 +194,8 @@ class Scheme:
 
         if source_config_version != target_config_version:
             showwarning(
-                title='Warning',
-                message=(
+                'Warning',
+                (
                     'XML configuration scheme version mismatch:\n\n'
                     f'Source scheme: {source_config_version}\n'
                     f'Target scheme: {target_config_version}\n\n'

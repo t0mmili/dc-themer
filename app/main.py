@@ -15,6 +15,11 @@ class App(tk.Tk):
     This class inherits from tkinter's Tk class and sets up the application
     window, including setting the window icon, title, and size, and
     initializing the menu bar and main application frame.
+
+    Attributes:
+        frame (AppFrame): The main application frame that contains the UI
+                          components.
+        menu (AppMenuBar): The menu bar for the application.
     """
     def __init__(self) -> None:
         """
@@ -30,8 +35,11 @@ class App(tk.Tk):
         self.resizable(False, False)
         self.title(APP_NAME)
 
+        # Create an instance of Frame
+        self.frame = AppFrame(self, user_config)
+
         # Create an instance of Menu Bar
-        self.menu = AppMenuBar(self, user_config)
+        self.menu = AppMenuBar(self, user_config, self.frame)
         self.config(menu=self.menu.menu_bar)
 
         # Center the window on the screen
@@ -63,16 +71,15 @@ if __name__ == '__main__':
     """
     Main execution point of the application.
 
-    This section initializes user configuration,
-    creates the main application window, and starts the event loop.
+    This section initializes user configuration, creates the main application
+    window, and starts the event loop.
     """
     try:
         user_config: dict = init_user_config()
         app = App()
-        AppFrame(app, user_config)
         app.mainloop()
     except Exception as e:
         showerror(
-            title='Error',
-            message=str(e)
+            'Error',
+            str(e)
         )

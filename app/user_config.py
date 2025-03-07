@@ -7,7 +7,7 @@ class UserConfigManager:
     Manages the user configuration for the application.
 
     Attributes:
-        default_user_config (dict): The default configuration settings.
+        default_user_config (dict): The default user configuration dictionary.
         user_config_path (str): The file path for the user configuration file.
     """
     def __init__(

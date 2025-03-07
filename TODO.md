@@ -4,7 +4,7 @@
 
 | Item | Details | Priority | Notes |
 |---|---|---|---|
-| Scheme export | - Export scheme from current DC config.<br>- Warning that scheme with the same name exists.<br>- Warning that scheme name is empty.<br>- Allowed chars in name only.<br>- Only save files if all are successfully generated. | High ||
+| Scheme export | - ~~Export from current DC config.~~<br>- ~~Warning: scheme with the same name already exists.~~<br>- ~~Warning: name is empty.~~<br>- Warning: ~~name should contain allowed chars only.~~<br>- Save files only if successfully generated. | High ||
 | Scheme apply | - Only save files if all are successfully updated.<br>- Detailed message with performed actions, e.g. config backup. | Medium ||
 | User config | - ~~Implement config in json format.~~<br>- ~~Create default, if doesn't exist, on app start.~~<br>- In-app window to modify.<br>- ~~Versioning, in case new config values appear in the future.~~ | Medium ||
 | Theme verification | Before applying, theme files should be verified against schemas (cfg, json, xml).<br>Some of it is already implemented in unit tests.<br>Schemas should be in separate files. | Medium ||
