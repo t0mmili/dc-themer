@@ -18,12 +18,15 @@
 | Item | Details |
 | --- | --- |
 | Compatibility | Test app on multiply Python versions. |
+| Tech debt | Mock RW files. |
+| Tech debt | Create test data in `setUpClass`. |
+
 
 ## CI/CD
 
 | Item | Details |
 | --- | --- |
-| Gitlab CI pipeline | Create. Should run quality gates and prepare Windows package for release. |
+| Gitlab CI pipeline | Create. Should run quality gates and prepare packages for release. |
 
 ## Documentation
 

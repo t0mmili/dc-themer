@@ -1,8 +1,8 @@
 # General information
 APP_AUTHOR = 't0mmili'
 APP_NAME = 'DC Themer'
-APP_VERSION = '0.4.1'
-DEV_YEARS = '2024'
+APP_VERSION = '0.5.0'
+DEV_YEARS = '2024-25'
 LICENSE_PATH = 'LICENSE'
 REPO_URL = 'https://github.com/t0mmili/dc-themer'
 
