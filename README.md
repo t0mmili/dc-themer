@@ -4,6 +4,7 @@ A free open source application aiming to complement the functionality of Double 
 ## :fire: Key features
 * Switch themes instantly with just one click.
 * Backup DC configuration before applying new theme.
+* Export current DC configuration as a reusable theme.
 * Get everything done via readable GUI.
 * Customize application configuration in json format.
 * For other planned cool features check [TODO.md](TODO.md).
@@ -14,9 +15,10 @@ DC Themer is written in [Python 3](https://www.python.org/), with the [Tkinter](
 ## :clipboard: Prerequisites
 There are no special requirements to my knowledge.
 
-For the time being DC Themer is released as Windows binary, but feel free to pull the source code and run/compile on other machines.
+> **NOTE**  
+> For the time being DC Themer is released as Windows binary, and is compatible with Windows OS only.
 
-## :rocket: Quick start (Windows)
+## :rocket: Quick start
 1. Download [DC Themer latest version](https://github.com/t0mmili/dc-themer/releases/latest).
 2. Download [themes]((https://github.com/t0mmili/dc-themes)) from my other GitHub repo.
 3. Put **schemes** folder next to **dc-themer.exe**.

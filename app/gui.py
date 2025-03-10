@@ -2,6 +2,7 @@ import os
 import platform
 import subprocess
 from webbrowser import open
+import re
 import tkinter as tk
 from tkinter import ttk
 import tkinter.font as tkFont
@@ -10,8 +11,8 @@ from app.config import (
     ABOUT_TITLE_FONT_SIZE, ABOUT_TITLE_FONT_WEIGHT, APP_AUTHOR, APP_NAME,
     APP_VERSION, DEV_YEARS, ICON_PATH, LICENSE_PATH, REPO_URL
 )
-from app.scheme import Scheme
-from app.utils import AppUtils, SchemeFileManager
+from app.scheme import Scheme, SchemeCreator
+from app.utils import AppUtils, DCFileManager, SchemeFileManager
 
 class AppMenuBar:
     """
@@ -20,16 +21,26 @@ class AppMenuBar:
     Attributes:
         menu_bar (tk.Menu): The main menu bar container.
         file_menu (tk.Menu): The file submenu of the menu bar.
+        tools_menu (tk.Menu): The tools submenu of the menu bar.
         help_menu (tk.Menu): The help submenu of the menu bar.
+        user_config (dict): The user configuration dictionary.
+        app_frame (AppFrame): The main application frame instance.
 
     Args:
         parent (tk.Tk): The parent widget, typically an instance of Tk or
                         a top-level window.
+        user_config (dict): The user configuration dictionary.
+        app_frame (AppFrame): The main application frame instance.
     """
-    def __init__(self, parent: tk.Tk) -> None:
+    def __init__(
+            self, parent: tk.Tk, user_config: dict, app_frame: 'AppFrame'
+        ) -> None:
         """
         Initializes the AppMenuBar class by setting up the Menu Bar items.
         """
+        self.user_config: dict = user_config
+        self.app_frame: AppFrame = app_frame
+
         # Initialize Menu Bar
         self.menu_bar: tk.Menu = tk.Menu(parent)
 
@@ -37,6 +48,14 @@ class AppMenuBar:
         self.file_menu: tk.Menu = tk.Menu(self.menu_bar, tearoff=False)
         self.file_menu.add_command(label='Exit', command=lambda: parent.quit())
         self.menu_bar.add_cascade(label='File', menu=self.file_menu)
+
+        # Add Menu Bar items: Tools
+        self.tools_menu: tk.Menu = tk.Menu(self.menu_bar, tearoff=False)
+        self.tools_menu.add_command(
+            label='Create scheme',
+            command=self.show_create_scheme_window
+        )
+        self.menu_bar.add_cascade(label='Tools', menu=self.tools_menu)
 
         # Add Menu Bar items: Help
         self.help_menu: tk.Menu = tk.Menu(self.menu_bar, tearoff=False)
@@ -50,45 +69,150 @@ class AppMenuBar:
         )
         self.menu_bar.add_cascade(label='Help', menu=self.help_menu)
 
-    def center_window(self, window: tk.Toplevel) -> None:
+    def show_create_scheme_window(self) -> None:
         """
-        Centers the window on the screen.
+        Sets and displays Create scheme modal window.
+        """
+        self.create_scheme_window: tk.Toplevel = tk.Toplevel()
+        icon_path: str = AppUtils.get_asset_path(ICON_PATH)
 
-        Args:
-            window (tk.Toplevel): Window object.
-        """
-        window.update_idletasks()
-        width: int = window.winfo_width()
-        height: int = window.winfo_height()
-        screen_width: int = window.winfo_screenwidth()
-        screen_height: int = window.winfo_screenheight()
-        center_x: int = (screen_width - width) // 2
-        center_y: int = (screen_height - height) // 2
-        window.geometry(f'{width}x{height}+{center_x}+{center_y}')
+        # Define and set widgets variables
+        self.cfg_file_var: tk.StringVar = tk.StringVar()
+        self.xml_file_var: tk.StringVar = tk.StringVar()
+        self.json_file_var: tk.StringVar = tk.StringVar()
+        self.scheme_name_var: tk.StringVar = tk.StringVar()
 
-    def open_license(self) -> None:
-        """
-        Opens LICENSE file using default system application.
-        """
-        if platform.system() == 'Windows':   # Windows
-            os.startfile(LICENSE_PATH)
-        elif platform.system() == 'Darwin':   # macOS
-            subprocess.run(['open', LICENSE_PATH])
-        else:   # Linux and others
-            subprocess.run(['xdg-open', LICENSE_PATH])
+        self.cfg_file_var.set(DCFileManager.get_config(
+            self.user_config['doubleCommander']['configPaths']['cfg'])
+        )
+        self.xml_file_var.set(DCFileManager.get_config(
+            self.user_config['doubleCommander']['configPaths']['xml'])
+        )
+        self.json_file_var.set(DCFileManager.get_config(
+            self.user_config['doubleCommander']['configPaths']['json'])
+        )
+
+        # Calculate Entry Widget width
+        entry_width: int = self.calculate_entry_width(
+            [self.cfg_file_var, self.xml_file_var, self.json_file_var]
+        )
+
+        # Validate Scheme name
+        def validate_scheme_name(value: str) -> str | None:
+            if not value.strip():
+                return 'Scheme name is empty.'
+
+            if re.fullmatch(r'[a-zA-Z0-9\-_]+', value) is None:
+                return (
+                    'Scheme name contains invalid characters.\n'
+                    'Allowed characters: a-z, A-Z, 0-9, -, _'
+                )
+
+            if value in SchemeFileManager.list_schemes(
+                self.user_config['schemes']['path'],
+                self.user_config['schemes']['extensions']
+            ):
+                return 'Scheme with this name already exists.'
+
+            return None
+
+        # Set window properties
+        self.create_scheme_window.iconbitmap(icon_path)
+        self.create_scheme_window.resizable(False, False)
+        self.create_scheme_window.title('Create scheme')
+
+        self.create_scheme_window.columnconfigure(0, weight=1)
+        self.create_scheme_window.columnconfigure(1, weight=3)
+
+        # Path to doublecmd.cfg entry
+        ttk.Label(
+            self.create_scheme_window, text='\'doublecmd.cfg\' path:'
+        ).grid(column=0, row=0, sticky=tk.W, padx=10, pady=10)
+        ttk.Entry(
+            self.create_scheme_window, state='readonly',
+            textvariable=self.cfg_file_var, width=entry_width
+        ).grid(column=1, row=0, sticky=tk.E, padx=10, pady=10)
+
+        # Path to doublecmd.xml entry
+        ttk.Label(
+            self.create_scheme_window, text='\'doublecmd.xml\' path:'
+        ).grid(column=0, row=1, sticky=tk.W, padx=10, pady=5)
+        ttk.Entry(
+            self.create_scheme_window, state='readonly',
+            textvariable=self.xml_file_var, width=entry_width
+        ).grid(column=1, row=1, sticky=tk.E, padx=10, pady=5)
+
+        # Path to colors.json entry
+        ttk.Label(
+            self.create_scheme_window, text='\'colors.json\' path:'
+        ).grid(column=0, row=2, sticky=tk.W, padx=10, pady=10)
+        ttk.Entry(
+            self.create_scheme_window, state='readonly',
+            textvariable=self.json_file_var, width=entry_width
+        ).grid(column=1, row=2, sticky=tk.E, padx=10, pady=10)
+
+        # Scheme name entry
+        ttk.Label(
+            self.create_scheme_window, text='Scheme name:'
+        ).grid(column=0, row=3, sticky=tk.W, padx=10, pady=5)
+        scheme_name_entry = ttk.Entry(
+            self.create_scheme_window, textvariable=self.scheme_name_var,
+            width=entry_width
+        )
+        scheme_name_entry.grid(
+            column=1, row=3, sticky=tk.E, padx=10, pady=5
+        )
+
+        # Export button
+        ttk.Button(
+            self.create_scheme_window, text='Export', command=lambda: (
+                self.initialize_scheme_creator(), self.create_scheme(),
+                self.app_frame.refresh_scheme_list()
+            )
+            if (
+                error_message := validate_scheme_name(
+                    self.scheme_name_var.get()
+                )
+            ) is None
+            else (
+                showerror(
+                    'Error',
+                    error_message,
+                    parent=self.create_scheme_window
+                ),
+                scheme_name_entry.focus_set()
+            )
+        ).grid(column=0, row=4, sticky=tk.W, padx=10, pady=10)
+
+        # Cancel button
+        ttk.Button(
+            self.create_scheme_window, text='Cancel',
+            command=lambda: self.create_scheme_window.destroy()
+        ).grid(column=1, row=4, sticky=tk.E, padx=10, pady=10)
+
+        AppUtils.center_window(self.create_scheme_window)
+
+        # Set focus on Scheme name entry
+        scheme_name_entry.focus_set()
+        
+        # Make window modal
+        self.create_scheme_window.grab_set()
+        self.create_scheme_window.wait_window()
 
     def show_about_window(self) -> None:
         """
         Sets and displays About modal window.
         """
         about_window: tk.Toplevel = tk.Toplevel()
-
         icon_path: str = AppUtils.get_asset_path(ICON_PATH)
 
         # Set window properties
         about_window.iconbitmap(icon_path)
         about_window.resizable(False, False)
         about_window.title('About')
+
+        about_window.columnconfigure(0, weight=1)
+        about_window.columnconfigure(1, weight=1)
 
         # Set font properties for app name and version
         title_font: tkFont.Font = tkFont.Font(
@@ -102,28 +226,97 @@ class AppMenuBar:
 
         ttk.Label(
             about_window, text=f'{APP_NAME} v{APP_VERSION}', font=title_font,
-            justify=tk.LEFT, padding=(10,10)
-        ).pack(anchor='w')
+            justify=tk.LEFT
+        ).grid(column=0, row=0, columnspan=2, sticky=tk.W, padx=10, pady=10)
         ttk.Label(
-            about_window, text=about_message, justify=tk.LEFT, padding=(10,0)
-        ).pack(anchor='w')
+            about_window, text=about_message, justify=tk.LEFT
+        ).grid(column=0, row=1, columnspan=2, sticky=tk.W, padx=10, pady=0)
 
-        button_frame = ttk.Frame(about_window)
-
-        button_frame.pack(pady=10)
         ttk.Button(
-            button_frame, text='License', command=self.open_license
-        ).pack(side=tk.LEFT, padx=5)
+            about_window, text='License', command=self.open_license
+        ).grid(column=0, row=2, sticky=tk.E, padx=10, pady=10)
         ttk.Button(
-            button_frame, text='Close', command=lambda: about_window.destroy()
-        ).pack(side=tk.LEFT, padx=5)
+            about_window, text='Close', command=lambda: about_window.destroy()
+        ).grid(column=1, row=2, sticky=tk.W, padx=10, pady=10)
 
-        self.center_window(about_window)
+        AppUtils.center_window(about_window)
 
         # Make window modal and set focus
         about_window.grab_set()
         about_window.focus_set()
         about_window.wait_window()
+
+    def calculate_entry_width(self, entries: list[tk.StringVar]) -> int:
+        """
+        Calculates the Entry Widget width based on the max length of entries.
+
+        Args:
+            entries (list[tk.StringVar]): The entries list.
+
+        Returns:
+            int: The calculated width for the Entry Widget.
+        """
+        font: tkFont.Font = tkFont.Font(family='TkDefaultFont')
+
+        # Choose the longest entry
+        longest_entry: str = max((entry.get() for entry in entries), key=len)
+
+        text_width: int = font.measure(longest_entry)
+        text_length: int = len(longest_entry)
+
+        avg_char_width: float = text_width / text_length
+
+        entry_width: int = int(text_width / avg_char_width) + 5
+
+        return entry_width
+
+    def create_scheme(self) -> None:
+        """
+        Creates a new scheme based on the current DC configuration.
+        """
+        try:
+            self.scheme_creator.create_scheme()
+
+            showinfo(
+                'Info',
+                (
+                    f'Scheme \'{self.scheme_name_var.get()}\' exported '
+                    'successfully.'
+                ),
+                parent=self.create_scheme_window
+            )
+        except Exception as e:
+            showerror(
+                'Error',
+                str(e),
+                parent=self.create_scheme_window
+            )
+
+    def initialize_scheme_creator(self) -> None:
+        """
+        Initialize an object of the SchemeCreator class using the current
+        configuration parameters.
+        """
+        self.scheme_creator = SchemeCreator(
+            self.scheme_name_var.get(),
+            self.user_config['schemes']['path'],
+            self.cfg_file_var.get(),
+            self.json_file_var.get(),
+            self.xml_file_var.get(),
+            0,
+            self.user_config['schemes']['xmlTags']
+        )
+
+    def open_license(self) -> None:
+        """
+        Opens the LICENSE file using the default system application.
+        """
+        if platform.system() == 'Windows':   # Windows
+            os.startfile(LICENSE_PATH)
+        elif platform.system() == 'Darwin':   # macOS
+            subprocess.run(['open', LICENSE_PATH])
+        else:   # Linux and others
+            subprocess.run(['xdg-open', LICENSE_PATH])
 
 class AppFrame(ttk.Frame):
     """
@@ -133,19 +326,13 @@ class AppFrame(ttk.Frame):
         scheme_var (StringVar): Variable to hold the selected scheme name.
         dark_mode_var (BooleanVar): Variable to store the state of
                                     the dark mode checkbox.
-        scheme_selector_label (ttk.Label): Label for the scheme selector
-                                           dropdown.
         scheme_selector (ttk.OptionMenu): Dropdown menu to select a scheme.
-        dark_mode_tick (ttk.Checkbutton): Checkbox to enable or disable auto
-                                          dark mode.
-        apply_button (ttk.Button): Button to verify and apply the selected
-                                   scheme.
+        user_config (dict): The user configuration dictionary.
 
     Args:
         container (tk.Tk): The parent widget, typically an instance of Tk or
                            a top-level window.
-        user_config (dict): The configuration dictionary loaded from user
-                            settings.
+        user_config (dict): The user configuration dictionary.
     """
     def __init__(self, container: tk.Tk, user_config: dict) -> None:
         """
@@ -154,13 +341,59 @@ class AppFrame(ttk.Frame):
         super().__init__(container)
         self.user_config: dict = user_config
 
+        self.grid(row=0, column=0, sticky=tk.NSEW, padx=10, pady=10)
         self.setup_widgets()
-        self.grid(padx=10, pady=10, sticky=tk.NSEW)
-        self.initialize_scheme()
+        self.refresh_scheme_list()
+
+    def setup_widgets(self) -> None:
+        """
+        Sets up the widgets in the frame.
+        """
+        # Define and set widgets variables
+        self.dark_mode_var = tk.BooleanVar(self)
+        self.scheme_var: tk.StringVar = tk.StringVar(self)
+
+        ttk.Label(
+            self, text='Select scheme:'
+        ).grid(column=1, row=1, sticky=tk.W, padx=(0,10), pady=(0,15))
+        self.scheme_selector = ttk.OptionMenu(self, self.scheme_var)
+        self.scheme_selector.grid(
+            column=2, row=1, sticky=tk.W, padx=(0,50), pady=(0,15)
+        )
+
+        # Dark Mode checkbox
+        ttk.Checkbutton(
+            self, text='Force auto Dark mode', variable=self.dark_mode_var,
+            onvalue=True, offvalue=False, takefocus=False
+        ).grid(column=1, row=2, columnspan=2, sticky=tk.W, pady=(0,20))
+
+        # Initialize class, verify and apply scheme
+        ttk.Button(
+            self, text='Apply', command=lambda: (
+                self.initialize_scheme(), self.verify_scheme(),
+                self.modify_scheme()
+            )
+        ).grid(column=1, row=3, columnspan=2, sticky=tk.W)
+
+    def refresh_scheme_list(self) -> None:
+        """
+        Refreshes the list of available schemes and updates the scheme
+        selector dropdown menu.
+        """
+        schemes: list[str] = SchemeFileManager.list_schemes(
+            self.user_config['schemes']['path'],
+            self.user_config['schemes']['extensions']
+        )
+
+        longest_scheme_name: int = max(len(scheme) for scheme in schemes)
+
+        self.scheme_selector.set_menu(schemes[0], *schemes)
+        self.scheme_selector.configure(width=longest_scheme_name)
 
     def initialize_scheme(self) -> None:
         """
-        Initialize object of Scheme class.
+        Initializes an object of the Scheme class based on the selected scheme
+        and current user configuration.
         """
         self.scheme = Scheme(
             self.scheme_var.get(), self.user_config['schemes']['path'],
@@ -177,60 +410,14 @@ class AppFrame(ttk.Frame):
         try:
             self.scheme.apply_scheme()
             showinfo(
-                title='Info',
-                message=(
-                    f'Scheme \'{self.scheme_var.get()}\' applied successfully.'
-                )
+                'Info',
+                f'Scheme \'{self.scheme_var.get()}\' applied successfully.'
             )
         except Exception as e:
             showerror(
                 title='Error',
                 message=str(e)
             )
-
-    def setup_widgets(self) -> None:
-        """
-        Sets up the widgets in the frame.
-        """
-        options: dict = {'padx': 5, 'pady': 5}
-
-        # Scheme selector
-        self.scheme_var: tk.StringVar = tk.StringVar(self)
-        schemes = SchemeFileManager.list_schemes(
-            self.user_config['schemes']['path'],
-            self.user_config['schemes']['extensions']
-        )
-        self.scheme_selector_label: ttk.Label = ttk.Label(
-            self, text='Select scheme:'
-        )
-        self.scheme_selector_label.grid(
-            column=0, row=0, sticky=tk.W, **options
-        )
-        self.scheme_selector: ttk.OptionMenu = ttk.OptionMenu(
-            self, self.scheme_var, schemes[0], *schemes
-        )
-        self.scheme_selector.grid(column=1, row=0, **options)
-
-        # Dark Mode checkbox
-        self.dark_mode_var = tk.BooleanVar(self)
-        self.dark_mode_tick: ttk.Checkbutton = ttk.Checkbutton(
-            self, text='Force auto Dark mode', variable=self.dark_mode_var,
-            onvalue=True, offvalue=False, takefocus=False
-        )
-        self.dark_mode_tick.grid(
-            column=0, row=1, columnspan=2, sticky=tk.W, **options
-        )
-
-        # Initialize, verify and apply scheme
-        self.apply_button: ttk.Button = ttk.Button(
-            self, text='Apply', command=lambda: (
-                self.initialize_scheme(), self.verify_scheme(),
-                self.modify_scheme()
-            )
-        )
-        self.apply_button.grid(
-            column=0, row=2, columnspan=2, sticky=tk.W, **options
-        )
 
     def verify_scheme(self) -> None:
         """
@@ -240,6 +427,6 @@ class AppFrame(ttk.Frame):
             self.scheme.verify_scheme()
         except Exception as e:
             showerror(
-                title='Error',
-                message=str(e)
+                'Error',
+                str(e)
             )

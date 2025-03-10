@@ -4,11 +4,31 @@ import shutil
 import json
 import configobj
 import json_repair
+import tkinter as tk
+from typing import Union
 
 class AppUtils:
     """
     Provides static methods that can be used throughout the application.
     """
+    @staticmethod
+    def center_window(window: Union[tk.Tk, tk.Toplevel]) -> None:
+        """
+        Centers the window on the screen.
+
+        Args:
+            window (Union[tk.Tk, tk.Toplevel]): The window object to be
+                                                centered.
+        """
+        window.update_idletasks()
+        width: int = window.winfo_reqwidth()
+        height: int = window.winfo_reqheight()
+        screen_width: int = window.winfo_screenwidth()
+        screen_height: int = window.winfo_screenheight()
+        center_x: int = (screen_width - width) // 2
+        center_y: int = (screen_height - height) // 2
+        window.geometry(f'{width}x{height}+{center_x}+{center_y}')
+
     @staticmethod
     def get_asset_path(infile: str) -> str:
         """
@@ -145,7 +165,7 @@ class SchemeFileManager:
             TypeError: If file does not contain valid json object data.
         """
         try:
-            with open(infile, 'r') as json_file:
+            with open(infile, 'r', encoding='utf-8') as json_file:
                 file_content = json_file.read()
             json_data = json_repair.loads(file_content)
 
@@ -183,19 +203,19 @@ class SchemeFileManager:
             ) from e
 
     @staticmethod
-    def set_xml(xml_data: str, outfile: str) -> None:
+    def set_xml(xml_data: bytes, outfile: str) -> None:
         """
         Writes xml data to a file.
 
         Args:
-            xml_data (str): The xml data to write.
+            xml_data (bytes): The xml data to write.
             outfile (str): The path to the output file.
 
         Raises:
             OSError: If an error occurs while writing to the file.
         """
         try:
-            with open(outfile, 'w', encoding='utf-8') as xml_file:
+            with open(outfile, 'wb') as xml_file:
                 xml_file.write(xml_data)
         except Exception as e:
             raise OSError(

@@ -3,6 +3,7 @@ import sys
 import unittest
 from unittest.mock import patch
 import tkinter.messagebox as messagebox
+import configobj
 import defusedxml.ElementTree as defusedxmlET
 
 # Append the parent directory to the system path to access app module
@@ -24,6 +25,12 @@ class TestScheme(unittest.TestCase):
             test_data.SCHEME_NAME, test_data.SCHEME_PATH,
             test_data.DC_CONFIG_PATHS, test_data.DC_BACKUP_CONFIGS,
             test_data.DARK_MODE, test_data.SCHEME_XML_TAGS
+        )
+        cls.scheme_creator = scheme.SchemeCreator(
+            test_data.SCHEME_NAME, test_data.SCHEME_PATH,
+            test_data.DC_CONFIG_PATHS['cfg'],
+            test_data.DC_CONFIG_PATHS['json'],
+            test_data.DC_CONFIG_PATHS['xml'], 2, test_data.SCHEME_XML_TAGS
         )
 
     def setUp(self):
@@ -69,7 +76,7 @@ class TestScheme(unittest.TestCase):
         Tests the apply_scheme_cfg method.
         """
         # Mock the return values for the dependent methods
-        self.setup_mock_methods(
+        self.setup_mock_methods_apply(
             mock_join, mock_get_config, test_data.DC_CONFIG_CFG_MOCK, 'cfg'
         )
 
@@ -88,7 +95,7 @@ class TestScheme(unittest.TestCase):
         Tests the apply_scheme_json method.
         """
         # Mock the return values for the dependent methods
-        self.setup_mock_methods(
+        self.setup_mock_methods_apply(
             mock_join, mock_get_config, test_data.DC_CONFIG_JSON_MOCK, 'json'
         )
 
@@ -107,7 +114,7 @@ class TestScheme(unittest.TestCase):
         Tests the apply_scheme_xml method.
         """
         # Mock the return values for the dependent methods
-        self.setup_mock_methods(
+        self.setup_mock_methods_apply(
             mock_join, mock_get_config, test_data.DC_CONFIG_XML_MOCK, 'xml'
         )
 
@@ -128,7 +135,7 @@ class TestScheme(unittest.TestCase):
         Tests the verify_scheme_version_xml method.
         """
         # Mock the return values for the dependent methods
-        self.setup_mock_methods(
+        self.setup_mock_methods_apply(
             mock_join, mock_get_config, test_data.DC_CONFIG_XML_MOCK, 'xml'
         )
 
@@ -149,25 +156,107 @@ class TestScheme(unittest.TestCase):
             messagebox.WARNING, messagebox.OK
         )
 
-    def setup_mock_methods(
+    @patch('app.utils.DCFileManager.get_config')
+    @patch('os.path.join')
+    def test_create_scheme_cfg(self, mock_get_config, mock_join):
+        """
+        Tests the create_scheme_cfg method.
+        """
+        # Mock the return values for the dependent methods
+        self.setup_mock_methods_create(
+            mock_get_config, mock_join, test_data.DC_CONFIG_CFG_MOCK, 'cfg'
+        )
+
+        self.scheme_creator.create_scheme_cfg()
+
+        # Check that changes were applied correctly
+        self.assert_config_files_darkmode_equal(
+            scheme.SchemeFileManager.get_cfg, test_data.DC_CONFIG_CFG_MOCK,
+            'cfg'
+        )
+
+    @patch('app.utils.DCFileManager.get_config')
+    @patch('os.path.join')
+    def test_create_scheme_json(self, mock_get_config, mock_join):
+        """
+        Tests the create_scheme_json method.
+        """
+        # Mock the return values for the dependent methods
+        self.setup_mock_methods_create(
+            mock_get_config, mock_join, test_data.DC_CONFIG_JSON_MOCK, 'json'
+        )
+
+        self.scheme_creator.create_scheme_json()
+
+        # Check that changes were applied correctly
+        self.assert_config_files_equal(
+            scheme.SchemeFileManager.get_json, test_data.DC_CONFIG_JSON_MOCK,
+            'json'
+        )
+
+    @patch('app.utils.DCFileManager.get_config')
+    @patch('os.path.join')
+    def test_create_scheme_xml(self, mock_get_config, mock_join):
+        """
+        Tests the create_scheme_xml method.
+        """
+        # Mock the return values for the dependent methods
+        self.setup_mock_methods_create(
+            mock_get_config, mock_join, test_data.DC_CONFIG_XML_MOCK, 'xml'
+        )
+
+        self.scheme_creator.create_scheme_xml()
+
+        # Check that changes were applied correctly
+        self.assert_xml_files_equal(
+            test_data.DC_CONFIG_XML_MOCK, test_data.SCHEME_XML_TAGS
+        )
+
+    def setup_mock_methods_apply(
             self, mock_join, mock_get_config, config_mock, config_type
         ):
         """
-        Helper method to setup mock methods for tests.
+        Helper method to setup mock methods for apply related tests.
         """
         mock_join.return_value = config_mock[f'{config_type}Source']['name']
         mock_get_config.return_value = (
             config_mock[f'{config_type}Target']['name']
         )
 
+    def setup_mock_methods_create(
+            self, mock_get_config, mock_join, config_mock, config_type
+        ):
+        """
+        Helper method to setup mock methods for create related tests.
+        """
+        mock_get_config.return_value = (
+            config_mock[f'{config_type}Source']['name']
+        )
+        mock_join.return_value = config_mock[f'{config_type}Target']['name']
+
     def assert_config_files_equal(self, get_method, config_mock, config_type):
         """
         Helper method to assert that config files are equal.
         """
-        source_config = get_method(config_mock[f'{config_type}Source']['name'])
-        target_config = get_method(config_mock[f'{config_type}Target']['name'])
+        source_file = get_method(config_mock[f'{config_type}Source']['name'])
+        target_file = get_method(config_mock[f'{config_type}Target']['name'])
 
-        self.assertDictEqual(source_config, target_config)
+        self.assertDictEqual(source_file, target_file)
+
+    def assert_config_files_darkmode_equal(
+            self, get_method, config_mock, config_type
+        ):
+        """
+        Helper method to assert that config files have equal DarkMode key.
+        """
+        source_config: configobj.ConfigObj = (
+            get_method(config_mock[f'{config_type}Source']['name'])
+        )
+        target_config: configobj.ConfigObj = (
+            get_method(config_mock[f'{config_type}Target']['name'])
+        )
+
+        self.assertEqual(source_config['DarkMode'], target_config['DarkMode'])
 
     def assert_xml_files_equal(self, xml_mock, xml_tags):
         """

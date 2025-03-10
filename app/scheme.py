@@ -3,6 +3,7 @@ from tkinter.messagebox import showwarning
 import configobj
 import defusedxml.ElementTree as defusedxmlET
 import defusedxml.minidom as defusedxmlMD
+import xml.etree.ElementTree as xmletreeET
 from app.utils import DCFileManager, SchemeFileManager
 
 class Scheme:
@@ -48,7 +49,7 @@ class Scheme:
             dc_configs (dict[str, str]): A dictionary containing DC
                                          configuration file types and their
                                          paths.
-            dc_configs_backup (bool): A flag to backup DC  configuration before
+            dc_configs_backup (bool): A flag to backup DC configuration before
                                       scheme apply.
             auto_dark_mode (bool): A flag to force auto dark mode if True.
             xml_tags (list[str]): A list of XML tags to be modified in xml
@@ -132,14 +133,14 @@ class Scheme:
         if self.dc_configs_backup:
             DCFileManager.backup_config(target_file)
 
+        # Create element tree object
+        source_tree = defusedxmlET.parse(source_file)
+        target_tree = defusedxmlET.parse(target_file)
+
+        # Get target root element
+        target_root = target_tree.getroot()
+
         for item in self.xml_tags:
-            # Create element tree object
-            source_tree = defusedxmlET.parse(source_file)
-            target_tree = defusedxmlET.parse(target_file)
-
-            # Get root element
-            target_root = target_tree.getroot()
-
             source_tag = source_tree.find(f'./{item}')
             target_tag = target_tree.find(f'./{item}')
 
@@ -154,16 +155,18 @@ class Scheme:
                     'configuration data.'
                 )
 
-            # Prettify XML
-            xml_str: str = defusedxmlET.tostring(target_root, encoding='utf-8')
-            dom = defusedxmlMD.parseString(xml_str)
-            pretty_xml: str = dom.toprettyxml(indent='  ')
-            pretty_xml = '\n'.join(
-                [line for line in pretty_xml.split('\n') if line.strip()]
-            )
+        # Prettify XML
+        xml_str: bytes = defusedxmlET.tostring(
+            target_root, encoding='utf-8'
+        )
+        dom = defusedxmlMD.parseString(xml_str.decode('utf-8'))
+        pretty_xml: bytes = dom.toprettyxml(indent='  ', encoding='utf-8')
+        pretty_xml = b'\n'.join(
+            [line for line in pretty_xml.split(b'\n') if line.strip()]
+        )
 
-            # Save modified DC xml config file
-            SchemeFileManager.set_xml(pretty_xml, target_file)
+        # Save modified DC xml config file
+        SchemeFileManager.set_xml(pretty_xml, target_file)
 
     def verify_scheme(self) -> None:
         """
@@ -191,8 +194,8 @@ class Scheme:
 
         if source_config_version != target_config_version:
             showwarning(
-                title='Warning',
-                message=(
+                'Warning',
+                (
                     'XML configuration scheme version mismatch:\n\n'
                     f'Source scheme: {source_config_version}\n'
                     f'Target scheme: {target_config_version}\n\n'
@@ -201,3 +204,163 @@ class Scheme:
                     'files.'
                 )
             )
+
+class SchemeCreator:
+    """
+    A class to create color schemes from configuration files.
+
+    Attributes:
+        scheme (str): The name of the scheme.
+        scheme_path (str): The file path where the scheme files are located.
+        dc_cfg_config_path (str): The path to the DC cfg configuration file.
+        dc_json_config_path (str): The path to the DC json configuration file.
+        dc_xml_config_path (str): The path to the DC xml configuration file.
+        dark_mode (int): The dark mode flag (1 - auto, 2 - on, 3 - off).
+        xml_tags (list): A list of XML tags to be modified in XML configuration
+                         files.
+
+    Methods:
+        create_scheme(): Creates the scheme to all configuration files
+                         (cfg, json, xml).
+        create_scheme_cfg(): Creates the scheme specifically to the cfg
+                             configuration file.
+        create_scheme_json(): Creates the scheme specifically to the json
+                              configuration file.
+        create_scheme_xml(): Creates the scheme specifically to the xml
+                             configuration file.
+    """
+    def __init__(
+        self, scheme: str, scheme_path: str, dc_cfg_config_path: str,
+        dc_json_config_path: str, dc_xml_config_path: str, dark_mode: int,
+        xml_tags: list[str]
+    ) -> None:
+        """
+        Constructs all the necessary attributes for the SchemeCreator object.
+
+        Args:
+            scheme (str): The name of the scheme.
+            scheme_path (str): The file path where the scheme files are
+                               located.
+            dc_cfg_config_path (str): The path to the DC cfg configuration
+                                      file.
+            dc_json_config_path (str): The path to the DC json configuration
+                                       file.
+            dc_xml_config_path (str): The path to the DC xml configuration
+                                      file.
+            dark_mode (int): The dark mode flag (1 - auto, 2 - on, 3 - off).
+            xml_tags (list[str]): A list of XML tags to be modified in xml
+                                  configuration files.
+        """
+        self.scheme: str = scheme
+        self.scheme_path: str = scheme_path
+        self.dc_cfg_config_path: str = dc_cfg_config_path
+        self.dc_json_config_path: str = dc_json_config_path
+        self.dc_xml_config_path: str = dc_xml_config_path
+        self.dark_mode: int = dark_mode
+        self.xml_tags: list[str] = xml_tags
+
+    def create_scheme(self) -> None:
+        """
+        Creates the scheme from all configuration files (cfg, json, xml).
+        """
+        self.create_scheme_cfg()
+        self.create_scheme_json()
+        self.create_scheme_xml()
+
+    def create_scheme_cfg(self) -> None:
+        """
+        Creates the scheme specifically from the cfg configuration file.
+        """
+        source_file: str = DCFileManager.get_config(self.dc_cfg_config_path)
+        target_file: str = os.path.join(self.scheme_path, f'{self.scheme}.cfg')
+        source_config: configobj.ConfigObj = (
+            SchemeFileManager.get_cfg(source_file)
+        )
+        target_config = configobj.ConfigObj()
+
+        # Preserve only DarkMode key
+        target_config['DarkMode'] = source_config['DarkMode']
+        self.dark_mode = int(str(target_config['DarkMode']))
+
+        # Save cfg scheme file
+        SchemeFileManager.set_cfg(target_config, target_file)
+
+    def create_scheme_json(self) -> None:
+        """
+        Creates the scheme specifically from the json configuration file.
+        """
+        source_file: str = DCFileManager.get_config(self.dc_json_config_path)
+        target_file: str = os.path.join(
+            self.scheme_path, f'{self.scheme}.json'
+        )
+        source_config: dict = SchemeFileManager.get_json(source_file)
+        target_config = {}
+
+        # Attach Style(s) properties
+        match self.dark_mode:
+            case 1:
+                target_config['Styles'] = source_config['Styles']
+            case 2:
+                target_config['Styles'] = [
+                    style for style in source_config['Styles']
+                        if style['Name'] == "Dark"
+                ]
+            case 3:
+                target_config['Styles'] = [
+                    style for style in source_config['Styles']
+                        if style['Name'] == "Light"
+                ]
+            case _:
+                raise ValueError(f'Invalid dark mode value: {self.dark_mode}')
+
+        # Attach FileColors property
+        target_config['FileColors'] = source_config['FileColors']
+
+        # Save json scheme file
+        SchemeFileManager.set_json(target_config, target_file)
+
+    def create_scheme_xml(self) -> None:
+        """
+        Creates the scheme specifically from the xml configuration file.
+        """
+        source_file: str = DCFileManager.get_config(self.dc_xml_config_path)
+        target_file: str = os.path.join(self.scheme_path, f'{self.scheme}.xml')
+
+        # Create source element tree object
+        source_tree = defusedxmlET.parse(source_file)
+
+        # Set target root element
+        target_root = xmletreeET.Element(
+            'doublecmd',
+            attrib={
+                'DCVersion':
+                    str(source_tree.getroot().attrib.get('DCVersion')),
+                'ConfigVersion':
+                    str(source_tree.getroot().attrib.get('ConfigVersion'))
+            }
+        )
+
+        for item in self.xml_tags:
+            source_tag = source_tree.find(f'./{item}')
+
+            # Append tags
+            if source_tag is not None:
+                target_root.append(source_tag)
+            else:
+                raise ValueError(
+                    f'Tag \'{item}\' does not exist in the source xml '
+                    'configuration data.'
+                )
+
+        # Prettify XML
+        xml_str: bytes = defusedxmlET.tostring(
+            target_root, encoding='utf-8', xml_declaration=True
+        )
+        dom = defusedxmlMD.parseString(xml_str.decode('utf-8'))
+        pretty_xml = dom.toprettyxml(indent='  ', encoding='utf-8')
+        pretty_xml = b'\n'.join(
+            [line for line in pretty_xml.split(b'\n') if line.strip()]
+        )
+
+        # Save xml scheme file
+        SchemeFileManager.set_xml(pretty_xml, target_file)

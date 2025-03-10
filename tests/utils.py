@@ -59,12 +59,11 @@ class TestScheme(unittest.TestCase):
         """
         os.makedirs(test_data.SCHEME_PATH, exist_ok=True)
         for ext in ['cfg', 'xml']:
-            with open(
+            open(
                 os.path.join(
                     test_data.SCHEME_PATH, f'{test_data.SCHEME_NAME}.{ext}'
                 ), 'w', encoding='utf-8'
-            ) as file:
-                pass
+            ).close()
 
     def remove_test_file(self, config_mock):
         """
@@ -209,18 +208,15 @@ class TestScheme(unittest.TestCase):
         """
         Tests the set_xml method.
         """
+        xml_content = test_data.DC_CONFIG_XML_MOCK['xmlSource']['content']
+        xml_target = test_data.DC_CONFIG_XML_MOCK['xmlTarget']['name']
+
         self.scheme_file_manager.set_xml(
-            test_data.DC_CONFIG_XML_MOCK['xmlSource']['content'],
-            test_data.DC_CONFIG_XML_MOCK['xmlTarget']['name']
+            xml_content.encode('utf-8'), xml_target
         )
 
         # Check that open was called with specific arguments
-        mock_open.assert_has_calls([
-            call(
-                test_data.DC_CONFIG_XML_MOCK['xmlTarget']['name'], 'w',
-                encoding='utf-8'
-            )
-        ])
+        mock_open.assert_has_calls([call(xml_target, 'wb')])
 
     def test_list_schemes(self):
         """
