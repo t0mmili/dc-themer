@@ -23,15 +23,20 @@ class TestUserConfigManager(unittest.TestCase):
             test_data.USER_CONFIG_DEFAULT, test_data.USER_CONFIG_PATH
         )
 
+        cls.config_current_version = test_data.CONFIG_CURRENT_VERSION
+        cls.config_read_version = test_data.CONFIG_READ_VERSION
+        cls.user_config_default = test_data.USER_CONFIG_DEFAULT
+        cls.user_config_path = test_data.USER_CONFIG_PATH
+
     def setUp(self):
         """
         Creates the test configuration file.
         """
         with open(
-            test_data.USER_CONFIG_PATH, 'w', encoding='utf-8'
+            self.user_config_path, 'w', encoding='utf-8'
         ) as json_file:
             json.dump(
-                test_data.USER_CONFIG_DEFAULT, json_file, ensure_ascii=False,
+                self.user_config_default, json_file, ensure_ascii=False,
                 indent=2
             )
 
@@ -39,8 +44,8 @@ class TestUserConfigManager(unittest.TestCase):
         """
         Removes the test configuration file.
         """
-        if os.path.exists(test_data.USER_CONFIG_PATH):
-            os.remove(test_data.USER_CONFIG_PATH)
+        if os.path.exists(self.user_config_path):
+            os.remove(self.user_config_path)
 
     def test_exists(self):
         """
@@ -60,7 +65,7 @@ class TestUserConfigManager(unittest.TestCase):
 
         # Check that open was called with specific arguments
         mock_open.assert_has_calls([
-            call(test_data.USER_CONFIG_PATH, 'w', encoding='utf-8')
+            call(self.user_config_path, 'w', encoding='utf-8')
         ])
 
     def test_get_config(self):
@@ -69,9 +74,9 @@ class TestUserConfigManager(unittest.TestCase):
         """
         self.assertDictEqual(
             self.user_config.get_config(
-                test_data.USER_CONFIG_PATH
+                self.user_config_path
             ),
-            test_data.USER_CONFIG_DEFAULT
+            self.user_config_default
         )
 
     def test_verify(self):
@@ -80,7 +85,7 @@ class TestUserConfigManager(unittest.TestCase):
         """
         with self.assertRaises(RuntimeError):
             self.user_config.verify(
-                test_data.CONFIG_CURRENT_VERSION, test_data.CONFIG_READ_VERSION
+                self.config_current_version, self.config_read_version
             )
 
 if __name__ == '__main__':

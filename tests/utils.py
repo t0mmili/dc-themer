@@ -28,6 +28,36 @@ class TestScheme(unittest.TestCase):
         cls.dc_file_manager = utils.DCFileManager()
         cls.scheme_file_manager = utils.SchemeFileManager()
 
+        cls.asset_default_config_path = test_data.ASSET_PATH
+        cls.cfg_source_content = (
+            test_data.DC_CONFIG_CFG_MOCK['cfgSource']['content']
+        )
+        cls.cfg_source_name = test_data.DC_CONFIG_CFG_MOCK['cfgSource']['name']
+        cls.cfg_source_schema = (
+            test_data.DC_CONFIG_CFG_MOCK['cfgSource']['schema']
+        )
+        cls.cfg_target_name = test_data.DC_CONFIG_CFG_MOCK['cfgTarget']['name']
+        cls.dc_config_path_test = test_data.DC_CONFIG_PATHS['test']
+        cls.json_source_name = (
+            test_data.DC_CONFIG_JSON_MOCK['jsonSource']['name']
+        )
+        cls.json_source_schema = (
+            test_data.DC_CONFIG_JSON_MOCK['jsonSource']['schema']
+        )
+        cls.json_target_name = (
+            test_data.DC_CONFIG_JSON_MOCK['jsonTarget']['name']
+        )
+        cls.scheme_name = test_data.SCHEME_NAME
+        cls.scheme_path = test_data.SCHEME_PATH
+        cls.xml_source_content = (
+            test_data.DC_CONFIG_XML_MOCK['xmlSource']['content']
+        )
+        cls.xml_source_name = test_data.DC_CONFIG_XML_MOCK['xmlSource']['name']
+        cls.xml_target_name = test_data.DC_CONFIG_XML_MOCK['xmlTarget']['name']
+        cls.user_config_extensions = (
+            test_data.USER_CONFIG_DEFAULT['schemes']['extensions']
+        )
+
     def setUp(self):
         """
         Creates the test configuration files and scheme.
@@ -57,11 +87,11 @@ class TestScheme(unittest.TestCase):
         """
         Helper method to create a test scheme.
         """
-        os.makedirs(test_data.SCHEME_PATH, exist_ok=True)
+        os.makedirs(self.scheme_path, exist_ok=True)
         for ext in ['cfg', 'xml']:
             open(
                 os.path.join(
-                    test_data.SCHEME_PATH, f'{test_data.SCHEME_NAME}.{ext}'
+                    self.scheme_path, f'{self.scheme_name}.{ext}'
                 ), 'w', encoding='utf-8'
             ).close()
 
@@ -78,30 +108,35 @@ class TestScheme(unittest.TestCase):
         """
         Helper method to remove a test scheme.
         """
-        if os.path.exists(test_data.SCHEME_PATH):
-            shutil.rmtree(test_data.SCHEME_PATH)
+        if os.path.exists(self.scheme_path):
+            shutil.rmtree(self.scheme_path)
 
     def test_get_asset_path(self):
         """
         Tests the get_asset_path method.
         """
-        asset_path = self.app_utils.get_asset_path(test_data.ASSET_PATH)
+        asset_path = self.app_utils.get_asset_path(
+            self.asset_default_config_path
+        )
 
         # Check that the returned path is the expected path
-        self.assertEqual(asset_path, os.path.abspath(test_data.ASSET_PATH))
+        self.assertEqual(
+            asset_path,
+            os.path.abspath(self.asset_default_config_path)
+        )
 
     def test_get_config(self):
         """
         Tests the get_config method.
         """
         dc_config_path = (
-            self.dc_file_manager.get_config(test_data.DC_CONFIG_PATHS['test'])
+            self.dc_file_manager.get_config(self.dc_config_path_test)
         )
 
         # Check that the returned path is the expected path
         self.assertEqual(
             dc_config_path,
-            os.path.expandvars(test_data.DC_CONFIG_PATHS['test'])
+            os.path.expandvars(self.dc_config_path_test)
         )
 
     def test_backup_config(self):
@@ -109,13 +144,13 @@ class TestScheme(unittest.TestCase):
         Tests the backup_config method.
         """
         self.dc_file_manager.backup_config(
-            test_data.DC_CONFIG_XML_MOCK['xmlSource']['name']
+            self.xml_source_name
         )
 
         # Check that backup files was created successfully
         self.assertTrue(
             os.path.exists(
-                f'{test_data.DC_CONFIG_XML_MOCK['xmlSource']['name']}.backup'
+                f'{self.xml_source_name}.backup'
             ),
             "Config backup file does not exist."
         )
@@ -124,15 +159,12 @@ class TestScheme(unittest.TestCase):
         """
         Tests the get_cfg method.
         """
-        config = self.scheme_file_manager.get_cfg(
-            test_data.DC_CONFIG_CFG_MOCK['cfgSource']['name']
-        )
+        config = self.scheme_file_manager.get_cfg(self.cfg_source_name)
 
         # Validate config against cfg schema
         config = configobj.ConfigObj(
             config,
-            configspec=test_data.DC_CONFIG_CFG_MOCK['cfgSource']['schema']
-                .splitlines()
+            configspec=self.cfg_source_schema.splitlines()
         )
 
         validator = configobjVal.Validator()
@@ -152,33 +184,23 @@ class TestScheme(unittest.TestCase):
         Tests the set_cfg method.
         """
         self.scheme_file_manager.set_cfg(
-            self.scheme_file_manager.get_cfg(
-                test_data.DC_CONFIG_CFG_MOCK['cfgSource']['name']
-            ),
-            test_data.DC_CONFIG_CFG_MOCK['cfgTarget']['name']
+            self.scheme_file_manager.get_cfg(self.cfg_source_name),
+            self.cfg_target_name
         )
 
         # Check that open was called with specific arguments
         mock_open.assert_has_calls([
-            call(
-                test_data.DC_CONFIG_CFG_MOCK['cfgTarget']['name'], 'w',
-                encoding='utf-8'
-            )
+            call(self.cfg_target_name, 'w', encoding='utf-8')
         ])
 
     def test_get_json(self):
         """
         Tests the get_json method.
         """
-        config = self.scheme_file_manager.get_json(
-            test_data.DC_CONFIG_JSON_MOCK['jsonSource']['name']
-        )
+        config = self.scheme_file_manager.get_json(self.json_source_name)
 
         # Validate config against json schema
-        jsonschema.validate(
-            config,
-            json.loads(test_data.DC_CONFIG_JSON_MOCK['jsonSource']['schema'])
-        )
+        jsonschema.validate(config, json.loads(self.json_source_schema))
 
     @patch(
         'builtins.open', new_callable=mock_open,
@@ -189,18 +211,13 @@ class TestScheme(unittest.TestCase):
         Tests the set_json method.
         """
         self.scheme_file_manager.set_json(
-            self.scheme_file_manager.get_json(
-                test_data.DC_CONFIG_JSON_MOCK['jsonSource']['name']
-            ),
-            test_data.DC_CONFIG_JSON_MOCK['jsonTarget']['name']
+            self.scheme_file_manager.get_json(self.json_source_name),
+            self.json_target_name
         )
 
         # Check that open was called with specific arguments
         mock_open.assert_has_calls([
-            call(
-                test_data.DC_CONFIG_JSON_MOCK['jsonTarget']['name'], 'w',
-                encoding='utf-8'
-            )
+            call(self.json_target_name, 'w', encoding='utf-8')
         ])
 
     @patch('builtins.open', new_callable=mock_open)
@@ -208,15 +225,12 @@ class TestScheme(unittest.TestCase):
         """
         Tests the set_xml method.
         """
-        xml_content = test_data.DC_CONFIG_XML_MOCK['xmlSource']['content']
-        xml_target = test_data.DC_CONFIG_XML_MOCK['xmlTarget']['name']
-
         self.scheme_file_manager.set_xml(
-            xml_content.encode('utf-8'), xml_target
+            self.xml_source_content.encode('utf-8'), self.xml_target_name
         )
 
         # Check that open was called with specific arguments
-        mock_open.assert_has_calls([call(xml_target, 'wb')])
+        mock_open.assert_has_calls([call(self.xml_target_name, 'wb')])
 
     def test_list_schemes(self):
         """
@@ -224,8 +238,7 @@ class TestScheme(unittest.TestCase):
         """
         with self.assertRaises(FileNotFoundError):
             self.scheme_file_manager.list_schemes(
-                test_data.SCHEME_PATH,
-                test_data.USER_CONFIG_DEFAULT['schemes']['extensions']
+                self.scheme_path, self.user_config_extensions
             )
 
 if __name__ == '__main__':
