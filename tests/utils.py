@@ -1,8 +1,8 @@
+import io
 import os
-import shutil
 import sys
 import unittest
-from unittest.mock import call, mock_open, patch
+from unittest.mock import mock_open, patch
 import configobj
 import configobj.validate as configobjVal
 import json
@@ -28,7 +28,6 @@ class TestScheme(unittest.TestCase):
         cls.dc_file_manager = utils.DCFileManager()
         cls.scheme_file_manager = utils.SchemeFileManager()
 
-        cls.asset_default_config_path = test_data.ASSET_PATH
         cls.cfg_source_content = (
             test_data.DC_CONFIG_CFG_MOCK['cfgSource']['content']
         )
@@ -37,7 +36,6 @@ class TestScheme(unittest.TestCase):
             test_data.DC_CONFIG_CFG_MOCK['cfgSource']['schema']
         )
         cls.cfg_target_name = test_data.DC_CONFIG_CFG_MOCK['cfgTarget']['name']
-        cls.dc_config_path_test = test_data.DC_CONFIG_PATHS['test']
         cls.json_source_name = (
             test_data.DC_CONFIG_JSON_MOCK['jsonSource']['name']
         )
@@ -47,69 +45,19 @@ class TestScheme(unittest.TestCase):
         cls.json_target_name = (
             test_data.DC_CONFIG_JSON_MOCK['jsonTarget']['name']
         )
-        cls.scheme_name = test_data.SCHEME_NAME
-        cls.scheme_path = test_data.SCHEME_PATH
         cls.xml_source_content = (
             test_data.DC_CONFIG_XML_MOCK['xmlSource']['content']
         )
         cls.xml_source_name = test_data.DC_CONFIG_XML_MOCK['xmlSource']['name']
         cls.xml_target_name = test_data.DC_CONFIG_XML_MOCK['xmlTarget']['name']
+
+        cls.asset_default_config_path = test_data.ASSET_PATH
+        cls.dc_config_path_test = test_data.DC_CONFIG_PATHS['test']
+        cls.scheme_name = test_data.SCHEME_NAME
+        cls.scheme_path = test_data.SCHEME_PATH
         cls.user_config_extensions = (
             test_data.USER_CONFIG_DEFAULT['schemes']['extensions']
         )
-
-    def setUp(self):
-        """
-        Creates the test configuration files and scheme.
-        """
-        self.create_test_file(test_data.DC_CONFIG_CFG_MOCK['cfgSource'])
-        self.create_test_file(test_data.DC_CONFIG_JSON_MOCK['jsonSource'])
-        self.create_test_file(test_data.DC_CONFIG_XML_MOCK['xmlSource'])
-        self.create_test_scheme()
-
-    def tearDown(self):
-        """
-        Removes the test configuration file and scheme.
-        """
-        self.remove_test_file(test_data.DC_CONFIG_CFG_MOCK['cfgSource'])
-        self.remove_test_file(test_data.DC_CONFIG_JSON_MOCK['jsonSource'])
-        self.remove_test_file(test_data.DC_CONFIG_XML_MOCK['xmlSource'])
-        self.remove_test_scheme()
-
-    def create_test_file(self, config_mock):
-        """
-        Helper method to create a test file.
-        """
-        with open(config_mock['name'], 'w', encoding='utf-8') as file:
-            file.write(config_mock['content'])
-
-    def create_test_scheme(self):
-        """
-        Helper method to create a test scheme.
-        """
-        os.makedirs(self.scheme_path, exist_ok=True)
-        for ext in ['cfg', 'xml']:
-            open(
-                os.path.join(
-                    self.scheme_path, f'{self.scheme_name}.{ext}'
-                ), 'w', encoding='utf-8'
-            ).close()
-
-    def remove_test_file(self, config_mock):
-        """
-        Helper method to remove a test file.
-        """
-        if os.path.exists(config_mock['name']):
-            os.remove(config_mock['name'])
-        if os.path.exists(f'{config_mock['name']}.backup'):
-            os.remove(f'{config_mock['name']}.backup')
-
-    def remove_test_scheme(self):
-        """
-        Helper method to remove a test scheme.
-        """
-        if os.path.exists(self.scheme_path):
-            shutil.rmtree(self.scheme_path)
 
     def test_get_asset_path(self):
         """
@@ -139,40 +87,36 @@ class TestScheme(unittest.TestCase):
             os.path.expandvars(self.dc_config_path_test)
         )
 
-    def test_backup_config(self):
+    @patch('shutil.copy', return_value=None)
+    def test_backup_config(self, mock_copy):
         """
         Tests the backup_config method.
         """
-        self.dc_file_manager.backup_config(
-            self.xml_source_name
-        )
+        self.dc_file_manager.backup_config(self.xml_source_name)
 
-        # Check that backup files was created successfully
-        self.assertTrue(
-            os.path.exists(
-                f'{self.xml_source_name}.backup'
-            ),
-            "Config backup file does not exist."
+        # Check that mock was called once with specific arguments
+        mock_copy.assert_called_once_with(
+            self.xml_source_name, f'{self.xml_source_name}.backup'
         )
 
     def test_get_cfg(self):
         """
         Tests the get_cfg method.
         """
-        config = self.scheme_file_manager.get_cfg(self.cfg_source_name)
+        # Mock source cfg file
+        cfg_source_file = io.StringIO(self.cfg_source_content)
+
+        config = self.scheme_file_manager.get_cfg(cfg_source_file)
 
         # Validate config against cfg schema
-        config = configobj.ConfigObj(
-            config,
-            configspec=self.cfg_source_schema.splitlines()
+        config.configspec = configobj.ConfigObj(
+            self.cfg_source_schema.splitlines()
         )
-
         validator = configobjVal.Validator()
         validator_result = config.validate(validator, preserve_errors=True)
 
         self.assertTrue(
-            True if validator_result is True else False,
-            validator_result
+            True if validator_result is True else False, validator_result
         )
 
     @patch(
@@ -189,11 +133,15 @@ class TestScheme(unittest.TestCase):
         )
 
         # Check that open was called with specific arguments
-        mock_open.assert_has_calls([
-            call(self.cfg_target_name, 'w', encoding='utf-8')
-        ])
+        mock_open.assert_called_with(
+            self.cfg_target_name, 'w', encoding='utf-8'
+        )
 
-    def test_get_json(self):
+    @patch(
+        'builtins.open', new_callable=mock_open,
+        read_data=test_data.DC_CONFIG_JSON_MOCK['jsonSource']['content']
+    )
+    def test_get_json(self, mock_open):
         """
         Tests the get_json method.
         """
@@ -216,9 +164,9 @@ class TestScheme(unittest.TestCase):
         )
 
         # Check that open was called with specific arguments
-        mock_open.assert_has_calls([
-            call(self.json_target_name, 'w', encoding='utf-8')
-        ])
+        mock_open.assert_called_with(
+            self.json_target_name, 'w', encoding='utf-8'
+        )
 
     @patch('builtins.open', new_callable=mock_open)
     def test_set_xml(self, mock_open):
@@ -230,9 +178,35 @@ class TestScheme(unittest.TestCase):
         )
 
         # Check that open was called with specific arguments
-        mock_open.assert_has_calls([call(self.xml_target_name, 'wb')])
+        mock_open.assert_called_with(self.xml_target_name, 'wb')
 
-    def test_list_schemes(self):
+    @patch(
+        'os.listdir',
+        return_value=['test-scheme.cfg', 'test-scheme.json', 'test-scheme.xml']
+    )
+    @patch('os.path.exists', return_value=True)
+    @patch('os.path.isfile', return_value=True)
+    def test_list_schemes_success(
+        self, mock_isfile, mock_exists, mock_listdir
+    ):
+        """
+        Tests the list_schemes method.
+        """
+        scheme_list = self.scheme_file_manager.list_schemes(
+            self.scheme_path, self.user_config_extensions
+        )
+
+        # Check that the returned scheme list is the expected list
+        self.assertEqual(scheme_list, [self.scheme_name])
+
+    @patch(
+        'os.listdir', return_value=['test-scheme.cfg', 'test-scheme.xml']
+    )
+    @patch('os.path.exists', return_value=True)
+    @patch('os.path.isfile', return_value=True)
+    def test_list_schemes_missing_files(
+        self, mock_isfile, mock_exists, mock_listdir
+    ):
         """
         Tests the list_schemes method.
         """

@@ -5,6 +5,7 @@ import json
 import configobj
 import json_repair
 import tkinter as tk
+from io import StringIO
 from typing import Union
 
 class AppUtils:
@@ -105,7 +106,7 @@ class SchemeFileManager:
     json, xml).
     """
     @staticmethod
-    def get_cfg(infile: str) -> configobj.ConfigObj:
+    def get_cfg(infile: str | StringIO) -> configobj.ConfigObj:
         """
         Reads a cfg configuration file and returns its contents as a ConfigObj.
 
