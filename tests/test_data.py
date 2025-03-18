@@ -16,8 +16,9 @@ SCHEME_XML_TAGS = [
 ]
 
 # User config
-CONFIG_CURRENT_VERSION = 2
-CONFIG_READ_VERSION = 1
+CONFIG_VERSION_CURRENT = 2
+CONFIG_VERSION_READ_FAIL = 1
+CONFIG_VERSION_READ_SUCCESS = 2
 USER_CONFIG_DEFAULT = {
     "configVersion": 1,
     "doubleCommander": {
@@ -42,6 +43,50 @@ USER_CONFIG_DEFAULT = {
     }
 }
 USER_CONFIG_PATH = 'dc-themer-test.json'
+USER_CONFIG_SCHEMA = {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "configVersion": {
+            "type": "integer",
+            "minimum": 1
+        },
+        "doubleCommander": {
+            "type": "object",
+            "properties": {
+                "backupConfigs": {
+                    "type": "boolean"
+                },
+                "configPaths": {
+                    "type": "object",
+                    "properties": {
+                        "cfg": { "type": "string" },
+                        "json": { "type": "string" },
+                        "xml": { "type": "string" }
+                    },
+                    "required": ["cfg", "json", "xml"]
+                }
+            },
+            "required": ["backupConfigs", "configPaths"]
+        },
+        "schemes": {
+            "type": "object",
+            "properties": {
+                "extensions": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                },
+                "path": { "type": "string" },
+                "xmlTags": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                }
+            },
+            "required": ["extensions", "path", "xmlTags"]
+        }
+    },
+    "required": ["configVersion", "doubleCommander", "schemes"]
+}
 
 # DC configs
 DC_CONFIG_CFG_MOCK = {

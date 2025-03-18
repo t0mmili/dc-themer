@@ -1,8 +1,8 @@
 import os
 import sys
 import unittest
-from unittest.mock import call, mock_open, patch
-import json
+from unittest.mock import mock_open, patch
+import jsonschema
 
 # Append the parent directory to the system path to access app module
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -23,38 +23,19 @@ class TestUserConfigManager(unittest.TestCase):
             test_data.USER_CONFIG_DEFAULT, test_data.USER_CONFIG_PATH
         )
 
-        cls.config_current_version = test_data.CONFIG_CURRENT_VERSION
-        cls.config_read_version = test_data.CONFIG_READ_VERSION
+        cls.config_ver_current = test_data.CONFIG_VERSION_CURRENT
+        cls.config_ver_read_fail = test_data.CONFIG_VERSION_READ_FAIL
+        cls.config_ver_read_success = test_data.CONFIG_VERSION_READ_SUCCESS
         cls.user_config_default = test_data.USER_CONFIG_DEFAULT
         cls.user_config_path = test_data.USER_CONFIG_PATH
+        cls.user_config_schema = test_data.USER_CONFIG_SCHEMA
 
-    def setUp(self):
-        """
-        Creates the test configuration file.
-        """
-        with open(
-            self.user_config_path, 'w', encoding='utf-8'
-        ) as json_file:
-            json.dump(
-                self.user_config_default, json_file, ensure_ascii=False,
-                indent=2
-            )
-
-    def tearDown(self):
-        """
-        Removes the test configuration file.
-        """
-        if os.path.exists(self.user_config_path):
-            os.remove(self.user_config_path)
-
-    def test_exists(self):
+    @patch('os.path.isfile', return_value=True)
+    def test_exists(self, mock_isfile):
         """
         Tests the exists method.
         """
-        self.assertTrue(
-            self.user_config.exists(),
-            "DC Themer configuration file does not exist."
-        )
+        self.assertTrue(self.user_config.exists())
 
     @patch('builtins.open', new_callable=mock_open)
     def test_create_default(self, mock_open):
@@ -64,28 +45,39 @@ class TestUserConfigManager(unittest.TestCase):
         self.user_config.create_default()
 
         # Check that open was called with specific arguments
-        mock_open.assert_has_calls([
-            call(self.user_config_path, 'w', encoding='utf-8')
-        ])
+        mock_open.assert_called_with(
+            self.user_config_path, 'w', encoding='utf-8'
+        )
 
-    def test_get_config(self):
+    @patch(
+        'builtins.open', new_callable=mock_open,
+        read_data=str(test_data.USER_CONFIG_DEFAULT)
+    )
+    def test_get_config(self, mock_open):
         """
         Tests the get_config method.
         """
-        self.assertDictEqual(
-            self.user_config.get_config(
-                self.user_config_path
-            ),
-            self.user_config_default
+        user_config = self.user_config.get_config(self.user_config_path)
+
+        # Validate user config against json schema
+        jsonschema.validate(user_config, self.user_config_schema)
+
+    def test_verify_success(self):
+        """
+        Tests the verify method for success.
+        """
+        self.user_config.verify(
+            self.config_ver_current, self.config_ver_read_success
         )
 
-    def test_verify(self):
+    def test_verify_version_mismatch(self):
         """
-        Tests the verify method.
+        Tests the verify method for failure.
+        Case details: Config's read and current version mismatch.
         """
         with self.assertRaises(RuntimeError):
             self.user_config.verify(
-                self.config_current_version, self.config_read_version
+                self.config_ver_current, self.config_ver_read_fail
             )
 
 if __name__ == '__main__':

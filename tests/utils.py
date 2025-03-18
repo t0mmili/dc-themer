@@ -190,7 +190,7 @@ class TestScheme(unittest.TestCase):
         self, mock_isfile, mock_exists, mock_listdir
     ):
         """
-        Tests the list_schemes method.
+        Tests the list_schemes method for success.
         """
         scheme_list = self.scheme_file_manager.list_schemes(
             self.scheme_path, self.user_config_extensions
@@ -208,7 +208,8 @@ class TestScheme(unittest.TestCase):
         self, mock_isfile, mock_exists, mock_listdir
     ):
         """
-        Tests the list_schemes method.
+        Tests the list_schemes method for failure.
+        Case details: One of the scheme files is missing.
         """
         with self.assertRaises(FileNotFoundError):
             self.scheme_file_manager.list_schemes(
