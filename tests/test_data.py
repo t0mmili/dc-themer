@@ -1,7 +1,5 @@
 # Misc
 ASSET_PATH = 'assets\\default-user-config.json'
-AUTO_DARK_MODE = False
-DC_BACKUP_CONFIGS = False
 DC_CONFIG_PATHS = {
     "cfg": "doublecmd.cfg",
     "json": "colors.json",

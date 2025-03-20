@@ -25,8 +25,7 @@ class TestScheme(unittest.TestCase):
         """
         cls.scheme = scheme.Scheme(
             test_data.SCHEME_NAME, test_data.SCHEME_PATH,
-            test_data.DC_CONFIG_PATHS, test_data.DC_BACKUP_CONFIGS,
-            test_data.AUTO_DARK_MODE, test_data.SCHEME_XML_TAGS
+            test_data.DC_CONFIG_PATHS, False, False, test_data.SCHEME_XML_TAGS
         )
         cls.scheme_creator = scheme.SchemeCreator(
             test_data.SCHEME_NAME, test_data.SCHEME_PATH,
