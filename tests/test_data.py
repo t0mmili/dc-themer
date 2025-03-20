@@ -1,6 +1,6 @@
 # Misc
 ASSET_PATH = 'assets\\default-user-config.json'
-DARK_MODE = False
+AUTO_DARK_MODE = False
 DC_BACKUP_CONFIGS = False
 DC_CONFIG_PATHS = {
     "cfg": "doublecmd.cfg",
@@ -228,8 +228,7 @@ DC_CONFIG_XML_MOCK = {
     <UseCursorBorder>True</UseCursorBorder>
     <UseFrameCursor>False</UseFrameCursor>
   </Colors>
-</doublecmd>""",
-        "version": "15"
+</doublecmd>"""
     },
     "xmlTarget": {
         "name": "doublecmd-test-2.xml",
@@ -248,7 +247,6 @@ DC_CONFIG_XML_MOCK = {
     <UseFrameCursor>True</UseFrameCursor>
   </Colors>
 </doublecmd>
-""",
-        "version": "14"
+"""
     }
 }
