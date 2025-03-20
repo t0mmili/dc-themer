@@ -91,7 +91,6 @@ USER_CONFIG_SCHEMA = {
 # DC configs
 DC_CONFIG_CFG_MOCK = {
     "cfgSource": {
-        "name": "doublecmd-test-1.cfg",
         "content": "SplashForm=-1\n"
           "DarkMode=2\n",
         "schema": """SplashForm = integer
@@ -99,14 +98,12 @@ DarkMode = integer
 """
     },
     "cfgTarget": {
-        "name": "doublecmd-test-2.cfg",
         "content": "SplashForm=-1\n"
             "DarkMode=3\n"
     }
 }
 DC_CONFIG_JSON_MOCK = {
     "jsonSource": {
-        "name": "colors-test-1.json",
         "content": """{
   Styles : [
     {
@@ -194,7 +191,6 @@ DC_CONFIG_JSON_MOCK = {
 }"""
     },
     "jsonTarget": {
-        "name": "colors-test-2.json",
         "content": """{
   Styles : [
     {
@@ -213,7 +209,6 @@ DC_CONFIG_JSON_MOCK = {
 }
 DC_CONFIG_XML_MOCK = {
     "xmlSource": {
-        "name": "doublecmd-test-1.xml",
         "content": """<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd DCVersion="1.1.16 gamma" ConfigVersion="15">
   <Fonts>
@@ -231,7 +226,6 @@ DC_CONFIG_XML_MOCK = {
 </doublecmd>"""
     },
     "xmlTarget": {
-        "name": "doublecmd-test-2.xml",
         "content": """<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd DCVersion="1.0.11 beta" ConfigVersion="14">
   <Fonts>

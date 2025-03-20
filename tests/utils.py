@@ -31,25 +31,15 @@ class TestScheme(unittest.TestCase):
         cls.cfg_source_content = (
             test_data.DC_CONFIG_CFG_MOCK['cfgSource']['content']
         )
-        cls.cfg_source_name = test_data.DC_CONFIG_CFG_MOCK['cfgSource']['name']
         cls.cfg_source_schema = (
             test_data.DC_CONFIG_CFG_MOCK['cfgSource']['schema']
-        )
-        cls.cfg_target_name = test_data.DC_CONFIG_CFG_MOCK['cfgTarget']['name']
-        cls.json_source_name = (
-            test_data.DC_CONFIG_JSON_MOCK['jsonSource']['name']
         )
         cls.json_source_schema = (
             test_data.DC_CONFIG_JSON_MOCK['jsonSource']['schema']
         )
-        cls.json_target_name = (
-            test_data.DC_CONFIG_JSON_MOCK['jsonTarget']['name']
-        )
         cls.xml_source_content = (
             test_data.DC_CONFIG_XML_MOCK['xmlSource']['content']
         )
-        cls.xml_source_name = test_data.DC_CONFIG_XML_MOCK['xmlSource']['name']
-        cls.xml_target_name = test_data.DC_CONFIG_XML_MOCK['xmlTarget']['name']
 
         cls.asset_default_config_path = test_data.ASSET_PATH
         cls.dc_config_path_test = test_data.DC_CONFIG_PATHS['test']
@@ -92,12 +82,10 @@ class TestScheme(unittest.TestCase):
         """
         Tests the backup_config method.
         """
-        self.dc_file_manager.backup_config(self.xml_source_name)
+        self.dc_file_manager.backup_config('source.xml')
 
         # Check that mock was called once with specific arguments
-        mock_copy.assert_called_once_with(
-            self.xml_source_name, f'{self.xml_source_name}.backup'
-        )
+        mock_copy.assert_called_once_with('source.xml', 'source.xml.backup')
 
     def test_get_cfg(self):
         """
@@ -128,24 +116,21 @@ class TestScheme(unittest.TestCase):
         Tests the set_cfg method.
         """
         self.scheme_file_manager.set_cfg(
-            self.scheme_file_manager.get_cfg(self.cfg_source_name),
-            self.cfg_target_name
+            self.scheme_file_manager.get_cfg('source.cfg'), 'target.cfg'
         )
 
         # Check that open was called with specific arguments
-        mock_open.assert_called_with(
-            self.cfg_target_name, 'w', encoding='utf-8'
-        )
+        mock_open.assert_called_with('target.cfg', 'w', encoding='utf-8')
 
     @patch(
         'builtins.open', new_callable=mock_open,
         read_data=test_data.DC_CONFIG_JSON_MOCK['jsonSource']['content']
     )
-    def test_get_json(self, mock_open):
+    def test_get_json(self, *_):
         """
         Tests the get_json method.
         """
-        config = self.scheme_file_manager.get_json(self.json_source_name)
+        config = self.scheme_file_manager.get_json('source.json')
 
         # Validate config against json schema
         jsonschema.validate(config, json.loads(self.json_source_schema))
@@ -159,14 +144,11 @@ class TestScheme(unittest.TestCase):
         Tests the set_json method.
         """
         self.scheme_file_manager.set_json(
-            self.scheme_file_manager.get_json(self.json_source_name),
-            self.json_target_name
+            self.scheme_file_manager.get_json('source.json'), 'target.json'
         )
 
         # Check that open was called with specific arguments
-        mock_open.assert_called_with(
-            self.json_target_name, 'w', encoding='utf-8'
-        )
+        mock_open.assert_called_with('target.json', 'w', encoding='utf-8')
 
     @patch('builtins.open', new_callable=mock_open)
     def test_set_xml(self, mock_open):
@@ -174,11 +156,11 @@ class TestScheme(unittest.TestCase):
         Tests the set_xml method.
         """
         self.scheme_file_manager.set_xml(
-            self.xml_source_content.encode('utf-8'), self.xml_target_name
+            self.xml_source_content.encode('utf-8'), 'target.xml'
         )
 
         # Check that open was called with specific arguments
-        mock_open.assert_called_with(self.xml_target_name, 'wb')
+        mock_open.assert_called_with('target.xml', 'wb')
 
     @patch(
         'os.listdir',
@@ -186,9 +168,7 @@ class TestScheme(unittest.TestCase):
     )
     @patch('os.path.exists', return_value=True)
     @patch('os.path.isfile', return_value=True)
-    def test_list_schemes_success(
-        self, mock_isfile, mock_exists, mock_listdir
-    ):
+    def test_list_schemes_success(self, *_):
         """
         Tests the list_schemes method for success.
         """
@@ -204,9 +184,7 @@ class TestScheme(unittest.TestCase):
     )
     @patch('os.path.exists', return_value=True)
     @patch('os.path.isfile', return_value=True)
-    def test_list_schemes_missing_files(
-        self, mock_isfile, mock_exists, mock_listdir
-    ):
+    def test_list_schemes_missing_files(self, *_):
         """
         Tests the list_schemes method for failure.
         Case details: One of the scheme files is missing.

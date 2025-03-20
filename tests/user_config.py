@@ -31,7 +31,7 @@ class TestUserConfigManager(unittest.TestCase):
         cls.user_config_schema = test_data.USER_CONFIG_SCHEMA
 
     @patch('os.path.isfile', return_value=True)
-    def test_exists(self, mock_isfile):
+    def test_exists(self, *_):
         """
         Tests the exists method.
         """
@@ -53,7 +53,7 @@ class TestUserConfigManager(unittest.TestCase):
         'builtins.open', new_callable=mock_open,
         read_data=str(test_data.USER_CONFIG_DEFAULT)
     )
-    def test_get_config(self, mock_open):
+    def test_get_config(self, *_):
         """
         Tests the get_config method.
         """
