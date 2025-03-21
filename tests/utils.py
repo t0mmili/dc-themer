@@ -34,6 +34,9 @@ class TestScheme(unittest.TestCase):
         cls.cfg_source_schema = (
             test_data.DC_CONFIG_CFG_MOCK['cfgSource']['schema']
         )
+        cls.json_source_content = (
+            test_data.DC_CONFIG_JSON_MOCK['jsonSource']['content']
+        )
         cls.json_source_schema = (
             test_data.DC_CONFIG_JSON_MOCK['jsonSource']['schema']
         )
@@ -77,11 +80,13 @@ class TestScheme(unittest.TestCase):
             os.path.expandvars(self.dc_config_path_test)
         )
 
-    @patch('shutil.copy', return_value=None)
+    @patch('shutil.copy')
     def test_backup_config(self, mock_copy):
         """
         Tests the backup_config method.
         """
+        mock_copy.return_value = None
+
         self.dc_file_manager.backup_config('source.xml')
 
         # Check that mock was called once with specific arguments
@@ -107,14 +112,13 @@ class TestScheme(unittest.TestCase):
             True if validator_result is True else False, validator_result
         )
 
-    @patch(
-        'builtins.open', new_callable=mock_open,
-        read_data=test_data.DC_CONFIG_CFG_MOCK['cfgSource']['content']
-    )
+    @patch('builtins.open', new_callable=mock_open)
     def test_set_cfg(self, mock_open):
         """
         Tests the set_cfg method.
         """
+        mock_open.read_data = self.cfg_source_content
+
         self.scheme_file_manager.set_cfg(
             self.scheme_file_manager.get_cfg('source.cfg'), 'target.cfg'
         )
@@ -122,27 +126,25 @@ class TestScheme(unittest.TestCase):
         # Check that open was called with specific arguments
         mock_open.assert_called_with('target.cfg', 'w', encoding='utf-8')
 
-    @patch(
-        'builtins.open', new_callable=mock_open,
-        read_data=test_data.DC_CONFIG_JSON_MOCK['jsonSource']['content']
-    )
-    def test_get_json(self, *_):
+    @patch('builtins.open', new_callable=mock_open)
+    def test_get_json(self, mock_open):
         """
         Tests the get_json method.
         """
+        mock_open.return_value.read.return_value = self.json_source_content
+
         config = self.scheme_file_manager.get_json('source.json')
 
         # Validate config against json schema
         jsonschema.validate(config, json.loads(self.json_source_schema))
 
-    @patch(
-        'builtins.open', new_callable=mock_open,
-        read_data=test_data.DC_CONFIG_JSON_MOCK['jsonSource']['content']
-    )
+    @patch('builtins.open', new_callable=mock_open)
     def test_set_json(self, mock_open):
         """
         Tests the set_json method.
         """
+        mock_open.return_value.read.return_value = self.json_source_content
+
         self.scheme_file_manager.set_json(
             self.scheme_file_manager.get_json('source.json'), 'target.json'
         )
@@ -162,16 +164,21 @@ class TestScheme(unittest.TestCase):
         # Check that open was called with specific arguments
         mock_open.assert_called_with('target.xml', 'wb')
 
-    @patch(
-        'os.listdir',
-        return_value=['test-scheme.cfg', 'test-scheme.json', 'test-scheme.xml']
-    )
-    @patch('os.path.exists', return_value=True)
-    @patch('os.path.isfile', return_value=True)
-    def test_list_schemes_success(self, *_):
+    @patch('os.listdir')
+    @patch('os.path.exists')
+    @patch('os.path.isfile')
+    def test_list_schemes_success(
+        self, mock_isfile, mock_exists, mock_listdir
+    ):
         """
         Tests the list_schemes method for success.
         """
+        mock_listdir.return_value = [
+            'test-scheme.cfg', 'test-scheme.json', 'test-scheme.xml'
+        ]
+        mock_exists.return_value = True
+        mock_isfile.return_value = True
+
         scheme_list = self.scheme_file_manager.list_schemes(
             self.scheme_path, self.user_config_extensions
         )
@@ -179,16 +186,20 @@ class TestScheme(unittest.TestCase):
         # Check that the returned scheme list is the expected list
         self.assertEqual(scheme_list, [self.scheme_name])
 
-    @patch(
-        'os.listdir', return_value=['test-scheme.cfg', 'test-scheme.xml']
-    )
-    @patch('os.path.exists', return_value=True)
-    @patch('os.path.isfile', return_value=True)
-    def test_list_schemes_missing_files(self, *_):
+    @patch('os.listdir')
+    @patch('os.path.exists')
+    @patch('os.path.isfile')
+    def test_list_schemes_missing_files(
+        self, mock_isfile, mock_exists, mock_listdir
+    ):
         """
         Tests the list_schemes method for failure.
         Case details: One of the scheme files is missing.
         """
+        mock_listdir.return_value = ['test-scheme.cfg', 'test-scheme.xml']
+        mock_exists.return_value = True
+        mock_isfile.return_value = True
+
         with self.assertRaises(FileNotFoundError):
             self.scheme_file_manager.list_schemes(
                 self.scheme_path, self.user_config_extensions

@@ -23,15 +23,17 @@ class TestScheme(unittest.TestCase):
         """
         Initializes the Scheme class with test data.
         """
+        cls.scheme_xml_tags = test_data.SCHEME_XML_TAGS
+
         cls.scheme = scheme.Scheme(
             test_data.SCHEME_NAME, test_data.SCHEME_PATH,
-            test_data.DC_CONFIG_PATHS, False, False, test_data.SCHEME_XML_TAGS
+            test_data.DC_CONFIG_PATHS, False, False, cls.scheme_xml_tags
         )
         cls.scheme_creator = scheme.SchemeCreator(
             test_data.SCHEME_NAME, test_data.SCHEME_PATH,
             test_data.DC_CONFIG_PATHS['cfg'],
             test_data.DC_CONFIG_PATHS['json'],
-            test_data.DC_CONFIG_PATHS['xml'], 0, test_data.SCHEME_XML_TAGS
+            test_data.DC_CONFIG_PATHS['xml'], 0, cls.scheme_xml_tags
         )
         
         cls.cfg_source_content = (
@@ -46,7 +48,6 @@ class TestScheme(unittest.TestCase):
         cls.json_target_content = (
             test_data.DC_CONFIG_JSON_MOCK['jsonTarget']['content']
         )
-        cls.scheme_xml_tags = test_data.SCHEME_XML_TAGS
         cls.xml_source_content = (
             test_data.DC_CONFIG_XML_MOCK['xmlSource']['content']
         )
@@ -54,18 +55,21 @@ class TestScheme(unittest.TestCase):
             test_data.DC_CONFIG_XML_MOCK['xmlTarget']['content']
         )
 
-    @patch('os.path.join', return_value='source.cfg')
-    @patch('app.utils.DCFileManager.get_config', return_value='target.cfg')
+    @patch('os.path.join')
+    @patch('app.utils.DCFileManager.get_config')
     @patch('app.utils.SchemeFileManager.get_cfg')
     @patch('app.utils.DCFileManager.backup_config')
     @patch('app.utils.SchemeFileManager.set_cfg')
     def test_apply_scheme_cfg_source_target(
-        self, mock_set_cfg, mock_backup_config, mock_get_cfg, *_
+        self, mock_set_cfg, mock_backup_config, mock_get_cfg, mock_get_config,
+        mock_join
     ):
         """
         Tests the apply_scheme_cfg method for success.
         Case details: Set target DarkMode based on source value.
         """
+        mock_join.return_value = 'source.cfg'
+        mock_get_config.return_value = 'target.cfg'
         mock_get_cfg.side_effect = lambda path: configobj.ConfigObj(
             io.StringIO(
                 self.cfg_source_content if 'source' in path else
@@ -81,18 +85,21 @@ class TestScheme(unittest.TestCase):
             mock_set_cfg.call_args[0][0]['DarkMode']
         )
 
-    @patch('os.path.join', return_value='source.cfg')
-    @patch('app.utils.DCFileManager.get_config', return_value='target.cfg')
+    @patch('os.path.join')
+    @patch('app.utils.DCFileManager.get_config')
     @patch('app.utils.SchemeFileManager.get_cfg')
     @patch('app.utils.DCFileManager.backup_config')
     @patch('app.utils.SchemeFileManager.set_cfg')
     def test_apply_scheme_cfg_auto_dark_mode(
-        self, mock_set_cfg, mock_backup_config, mock_get_cfg, *_
+        self, mock_set_cfg, mock_backup_config, mock_get_cfg, mock_get_config,
+        mock_join
     ):
         """
         Tests the apply_scheme_cfg method for success.
         Case details: Set target DarkMode to auto.
         """
+        mock_join.return_value = 'source.cfg'
+        mock_get_config.return_value = 'target.cfg'
         mock_get_cfg.side_effect = lambda path: configobj.ConfigObj(
             io.StringIO(
                 self.cfg_source_content if 'source' in path else
@@ -106,17 +113,20 @@ class TestScheme(unittest.TestCase):
         # Check that target has 'DarkMode' value set to auto
         self.assertEqual(mock_set_cfg.call_args[0][0]['DarkMode'], '1')
 
-    @patch('os.path.join', return_value='source.json')
-    @patch('app.utils.DCFileManager.get_config', return_value='target.json')
+    @patch('os.path.join')
+    @patch('app.utils.DCFileManager.get_config')
     @patch('app.utils.SchemeFileManager.get_json')
     @patch('app.utils.DCFileManager.backup_config')
     @patch('app.utils.SchemeFileManager.set_json')
     def test_apply_scheme_json(
-        self, mock_set_json, mock_backup_config, mock_get_json, *_
+        self, mock_set_json, mock_backup_config, mock_get_json,
+        mock_get_config, mock_join
     ):
         """
         Tests the apply_scheme_json method.
         """
+        mock_join.return_value = 'source.json'
+        mock_get_config.return_value = 'target.json'
         mock_get_json.side_effect = lambda path: json_repair.loads(
             self.json_source_content if 'source' in path else
             self.json_target_content
@@ -129,15 +139,20 @@ class TestScheme(unittest.TestCase):
             mock_get_json('source'), mock_set_json.call_args[0][0]
         )
 
-    @patch('os.path.join', return_value='source.xml')
-    @patch('app.utils.DCFileManager.get_config', return_value='target.xml')
+    @patch('os.path.join')
+    @patch('app.utils.DCFileManager.get_config')
     @patch('app.utils.DCFileManager.backup_config')
     @patch('defusedxml.ElementTree.parse')
     @patch('app.utils.SchemeFileManager.set_xml')
-    def test_apply_scheme_xml(self, mock_set_xml, mock_parse, *_):
+    def test_apply_scheme_xml(
+        self, mock_set_xml, mock_parse, mock_backup_config, mock_get_config,
+        mock_join
+    ):
         """
         Tests the apply_scheme_xml method.
         """
+        mock_join.return_value = 'source.xml'
+        mock_get_config.return_value = 'target.xml'
         mock_parse.side_effect = lambda path: ET.ElementTree(
             defusedxmlET.fromstring(
                 self.xml_source_content if 'source' in path else
@@ -153,14 +168,18 @@ class TestScheme(unittest.TestCase):
             self.scheme_xml_tags
         )
 
-    @patch('os.path.join', return_value='source.xml')
-    @patch('app.utils.DCFileManager.get_config', return_value='target.xml')
+    @patch('os.path.join')
+    @patch('app.utils.DCFileManager.get_config')
     @patch('defusedxml.ElementTree.parse')
     @patch('tkinter.messagebox._show')
-    def test_verify_scheme_version_xml(self, mock_show, mock_parse, *_):
+    def test_verify_scheme_version_xml(
+        self, mock_show, mock_parse, mock_get_config, mock_join
+    ):
         """
         Tests the verify_scheme_version_xml method.
         """
+        mock_join.return_value = 'source.xml'
+        mock_get_config.return_value = 'target.xml'
         mock_parse.side_effect = lambda path: ET.ElementTree(
             defusedxmlET.fromstring(
                 self.xml_source_content if 'source' in path else
@@ -174,14 +193,18 @@ class TestScheme(unittest.TestCase):
         mock_show.assert_called_once()
         self.assertEqual(mock_show.call_args[0][2], 'warning')
 
-    @patch('app.utils.DCFileManager.get_config', return_value='source.cfg')
-    @patch('os.path.join', return_value='target.cfg')
+    @patch('app.utils.DCFileManager.get_config')
+    @patch('os.path.join')
     @patch('app.utils.SchemeFileManager.get_cfg')
     @patch('app.utils.SchemeFileManager.set_cfg')
-    def test_create_scheme_cfg(self, mock_set_cfg, mock_get_cfg, *_):
+    def test_create_scheme_cfg(
+        self, mock_set_cfg, mock_get_cfg, mock_join, mock_get_config
+    ):
         """
         Tests the create_scheme_cfg method.
         """
+        mock_get_config.return_value = 'source.cfg'
+        mock_join.return_value = 'target.cfg'
         mock_get_cfg.return_value = (
             configobj.ConfigObj(io.StringIO(self.cfg_source_content))
         )
@@ -194,14 +217,18 @@ class TestScheme(unittest.TestCase):
             mock_set_cfg.call_args[0][0]['DarkMode']
         )
 
-    @patch('app.utils.DCFileManager.get_config', return_value='source.json')
-    @patch('os.path.join', return_value='target.json')
+    @patch('app.utils.DCFileManager.get_config')
+    @patch('os.path.join')
     @patch('app.utils.SchemeFileManager.get_json')
     @patch('app.utils.SchemeFileManager.set_json')
-    def test_create_scheme_json(self, mock_set_json, mock_get_json, *_):
+    def test_create_scheme_json(
+        self, mock_set_json, mock_get_json, mock_join, mock_get_config
+    ):
         """
         Tests the create_scheme_json method.
         """
+        mock_get_config.return_value = 'source.json'
+        mock_join.return_value = 'target.json'
         mock_get_json.return_value = (
             json_repair.loads(self.json_source_content)
         )
@@ -212,14 +239,18 @@ class TestScheme(unittest.TestCase):
         # Check that source was applied correctly to target
         self.assertEqual(mock_get_json(), mock_set_json.call_args[0][0])
         
-    @patch('app.utils.DCFileManager.get_config', return_value='source.xml')
-    @patch('os.path.join', return_value='target.xml')
+    @patch('app.utils.DCFileManager.get_config')
+    @patch('os.path.join')
     @patch('defusedxml.ElementTree.parse')
     @patch('app.utils.SchemeFileManager.set_xml')
-    def test_create_scheme_xml(self, mock_set_xml, mock_parse, *_):
+    def test_create_scheme_xml(
+        self, mock_set_xml, mock_parse, mock_join, mock_get_config
+    ):
         """
         Tests the create_scheme_xml method.
         """
+        mock_get_config.return_value = 'source.xml'
+        mock_join.return_value = 'target.xml'
         mock_parse.return_value = (
             ET.ElementTree(defusedxmlET.fromstring(self.xml_source_content))
         )

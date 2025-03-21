@@ -19,22 +19,25 @@ class TestUserConfigManager(unittest.TestCase):
         """
         Initializes the UserConfigManager class with test data.
         """
+        cls.user_config_default = test_data.USER_CONFIG_DEFAULT
+        cls.user_config_path = test_data.USER_CONFIG_PATH
+
         cls.user_config = user_config.UserConfigManager(
-            test_data.USER_CONFIG_DEFAULT, test_data.USER_CONFIG_PATH
+            cls.user_config_default, cls.user_config_path
         )
 
         cls.config_ver_current = test_data.CONFIG_VERSION_CURRENT
         cls.config_ver_read_fail = test_data.CONFIG_VERSION_READ_FAIL
         cls.config_ver_read_success = test_data.CONFIG_VERSION_READ_SUCCESS
-        cls.user_config_default = test_data.USER_CONFIG_DEFAULT
-        cls.user_config_path = test_data.USER_CONFIG_PATH
         cls.user_config_schema = test_data.USER_CONFIG_SCHEMA
 
-    @patch('os.path.isfile', return_value=True)
-    def test_exists(self, *_):
+    @patch('os.path.isfile')
+    def test_exists(self, mock_isfile):
         """
         Tests the exists method.
         """
+        mock_isfile.return_value = True
+
         self.assertTrue(self.user_config.exists())
 
     @patch('builtins.open', new_callable=mock_open)
@@ -49,14 +52,15 @@ class TestUserConfigManager(unittest.TestCase):
             self.user_config_path, 'w', encoding='utf-8'
         )
 
-    @patch(
-        'builtins.open', new_callable=mock_open,
-        read_data=str(test_data.USER_CONFIG_DEFAULT)
-    )
-    def test_get_config(self, *_):
+    @patch('builtins.open', new_callable=mock_open)
+    def test_get_config(self, mock_open):
         """
         Tests the get_config method.
         """
+        mock_open.return_value.read.return_value = str(
+            self.user_config_default
+        )
+
         user_config = self.user_config.get_config(self.user_config_path)
 
         # Validate user config against json schema
