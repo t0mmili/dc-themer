@@ -1,6 +1,7 @@
 import os
 import json
 import json_repair
+from json import JSONDecodeError
 
 class UserConfigManager:
     """
@@ -43,9 +44,9 @@ class UserConfigManager:
                     self.default_user_config, json_file, ensure_ascii=False,
                     indent=2
                 )
-        except Exception as e:
+        except OSError as e:
             raise OSError(
-                f'Failed to write default configuration.\n\n{str(e)}'
+                f'Failed to write default configuration.\n\n{e}'
             ) from e
 
     @staticmethod
@@ -59,25 +60,33 @@ class UserConfigManager:
 
         Raises:
             OSError: If an error occurs while reading the file.
-            TypeError: If file does not contain valid json object data.
+            JSONDecodeError: If json contains invalid data.
+            TypeError: If json object has an invalid type.
         """
         try:
             with open(infile, 'r') as json_file:
                 file_content = json_file.read()
-            json_data = json_repair.loads(file_content)
-
-            # Ensure json_data is a dictionary
-            if not isinstance(json_data, dict):
-                raise TypeError(
-                    f'The configuration file {infile} does not contain valid '
-                    'json object data.'
-                )
- 
-            return json_data
-        except Exception as e:
+        except OSError as e:
             raise OSError(
-                f'Failed to read configuration.\n\n{str(e)}'
+                f'Failed to read configuration file {infile}.\n\n{e}'
             ) from e
+
+        try:
+            json_data = json_repair.loads(file_content)
+        except JSONDecodeError as e:
+            raise JSONDecodeError(
+                f'The configuration file {infile} contains invalid json '
+                f'data.\n\n{e}', e.doc, e.pos
+            ) from e
+
+        # Ensure json_data is a dictionary
+        if not isinstance(json_data, dict):
+            raise TypeError(
+                f'The configuration file {infile} contains '
+                f'{type(json_data).__name__} instead of valid json object.'
+            )
+ 
+        return json_data
 
     @staticmethod
     def verify(current_version, read_version) -> None:

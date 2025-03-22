@@ -41,9 +41,9 @@ class TestUserConfigManager(unittest.TestCase):
         self.assertTrue(self.user_config.exists())
 
     @patch('builtins.open', new_callable=mock_open)
-    def test_create_default(self, mock_open):
+    def test_create_default_success(self, mock_open):
         """
-        Tests the create_default method.
+        Tests the create_default method for success.
         """
         self.user_config.create_default()
 
@@ -53,9 +53,20 @@ class TestUserConfigManager(unittest.TestCase):
         )
 
     @patch('builtins.open', new_callable=mock_open)
-    def test_get_config(self, mock_open):
+    def test_create_default_failed_write(self, mock_open):
         """
-        Tests the get_config method.
+        Tests the create_default method for failure.
+        Case details: Writing to file raised an exception.
+        """
+        mock_open.side_effect = OSError()
+
+        with self.assertRaises(OSError):
+            self.user_config.create_default()
+
+    @patch('builtins.open', new_callable=mock_open)
+    def test_get_config_success(self, mock_open):
+        """
+        Tests the get_config method for success.
         """
         mock_open.return_value.read.return_value = str(
             self.user_config_default
@@ -65,6 +76,17 @@ class TestUserConfigManager(unittest.TestCase):
 
         # Validate user config against json schema
         jsonschema.validate(user_config, self.user_config_schema)
+
+    @patch('builtins.open', new_callable=mock_open)
+    def test_get_config_type_error(self, mock_open):
+        """
+        Tests the get_config method for failure.
+        Case details: Config file does not contain data of the correct type.
+        """
+        mock_open.return_value.read.return_value = str([])
+
+        with self.assertRaises(TypeError):
+            self.user_config.get_config(self.user_config_path)
 
     def test_verify_success(self):
         """
