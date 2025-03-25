@@ -58,11 +58,9 @@ class TestScheme(unittest.TestCase):
     @patch('os.path.join')
     @patch('app.utils.DCFileManager.get_config')
     @patch('app.utils.SchemeFileManager.get_cfg')
-    @patch('app.utils.DCFileManager.backup_config')
     @patch('app.utils.SchemeFileManager.set_cfg')
     def test_apply_scheme_cfg_source_target(
-        self, mock_set_cfg, mock_backup_config, mock_get_cfg, mock_get_config,
-        mock_join
+        self, mock_set_cfg, mock_get_cfg, mock_get_config, mock_join
     ):
         """
         Tests the apply_scheme_cfg method for success.
@@ -88,11 +86,9 @@ class TestScheme(unittest.TestCase):
     @patch('os.path.join')
     @patch('app.utils.DCFileManager.get_config')
     @patch('app.utils.SchemeFileManager.get_cfg')
-    @patch('app.utils.DCFileManager.backup_config')
     @patch('app.utils.SchemeFileManager.set_cfg')
     def test_apply_scheme_cfg_auto_dark_mode(
-        self, mock_set_cfg, mock_backup_config, mock_get_cfg, mock_get_config,
-        mock_join
+        self, mock_set_cfg, mock_get_cfg, mock_get_config, mock_join
     ):
         """
         Tests the apply_scheme_cfg method for success.
@@ -116,14 +112,12 @@ class TestScheme(unittest.TestCase):
     @patch('os.path.join')
     @patch('app.utils.DCFileManager.get_config')
     @patch('app.utils.SchemeFileManager.get_json')
-    @patch('app.utils.DCFileManager.backup_config')
     @patch('app.utils.SchemeFileManager.set_json')
-    def test_apply_scheme_json(
-        self, mock_set_json, mock_backup_config, mock_get_json,
-        mock_get_config, mock_join
+    def test_apply_scheme_json_success(
+        self, mock_set_json, mock_get_json, mock_get_config, mock_join
     ):
         """
-        Tests the apply_scheme_json method.
+        Tests the apply_scheme_json method for success.
         """
         mock_join.return_value = 'source.json'
         mock_get_config.return_value = 'target.json'
@@ -141,15 +135,33 @@ class TestScheme(unittest.TestCase):
 
     @patch('os.path.join')
     @patch('app.utils.DCFileManager.get_config')
-    @patch('app.utils.DCFileManager.backup_config')
-    @patch('defusedxml.ElementTree.parse')
-    @patch('app.utils.SchemeFileManager.set_xml')
-    def test_apply_scheme_xml(
-        self, mock_set_xml, mock_parse, mock_backup_config, mock_get_config,
-        mock_join
+    @patch('app.utils.SchemeFileManager.get_json')
+    @patch('app.utils.SchemeFileManager.set_json')
+    def test_apply_scheme_json_missing_key(
+        self, mock_set_json, mock_get_json, mock_get_config, mock_join
     ):
         """
-        Tests the apply_scheme_xml method.
+        Tests the apply_scheme_json method for failure.
+        Case details: Required keys are missing in the source json file.
+        """
+        mock_join.return_value = 'source.json'
+        mock_get_config.return_value = 'target.json'
+        mock_get_json.side_effect = lambda path: json_repair.loads(
+            '{}' if 'source' in path else self.json_target_content
+        )
+
+        with self.assertRaises(KeyError):
+            self.scheme.apply_scheme_json()
+
+    @patch('os.path.join')
+    @patch('app.utils.DCFileManager.get_config')
+    @patch('defusedxml.ElementTree.parse')
+    @patch('app.utils.SchemeFileManager.set_xml')
+    def test_apply_scheme_xml_success(
+        self, mock_set_xml, mock_parse, mock_get_config, mock_join
+    ):
+        """
+        Tests the apply_scheme_xml method for success.
         """
         mock_join.return_value = 'source.xml'
         mock_get_config.return_value = 'target.xml'
@@ -167,6 +179,31 @@ class TestScheme(unittest.TestCase):
             self.xml_source_content, mock_set_xml.call_args[0][0],
             self.scheme_xml_tags
         )
+
+    @patch('os.path.join')
+    @patch('app.utils.DCFileManager.get_config')
+    @patch('defusedxml.ElementTree.parse')
+    @patch('app.utils.SchemeFileManager.set_xml')
+    def test_apply_scheme_xml_missing_tags(
+        self, mock_set_xml, mock_parse, mock_get_config, mock_join
+    ):
+        """
+        Tests the apply_scheme_xml method for failure.
+        Case details: Required tag is missing in the source xml file.
+        """
+        mock_join.return_value = 'source.xml'
+        mock_get_config.return_value = 'target.xml'
+        mock_parse.side_effect = lambda path: ET.ElementTree(
+            defusedxmlET.fromstring(
+                self.xml_source_content if 'source' in path else
+                self.xml_target_content
+            )
+        )
+
+        with self.assertRaises(ValueError):
+            with patch.object(self.scheme, 'xml_tags', new=['TestTag']):
+                self.scheme.apply_scheme_xml()
+
 
     @patch('os.path.join')
     @patch('app.utils.DCFileManager.get_config')
@@ -221,11 +258,11 @@ class TestScheme(unittest.TestCase):
     @patch('os.path.join')
     @patch('app.utils.SchemeFileManager.get_json')
     @patch('app.utils.SchemeFileManager.set_json')
-    def test_create_scheme_json(
+    def test_create_scheme_json_success(
         self, mock_set_json, mock_get_json, mock_join, mock_get_config
     ):
         """
-        Tests the create_scheme_json method.
+        Tests the create_scheme_json method for success.
         """
         mock_get_config.return_value = 'source.json'
         mock_join.return_value = 'target.json'
@@ -238,16 +275,37 @@ class TestScheme(unittest.TestCase):
 
         # Check that source was applied correctly to target
         self.assertEqual(mock_get_json(), mock_set_json.call_args[0][0])
-        
+
+    @patch('app.utils.DCFileManager.get_config')
+    @patch('os.path.join')
+    @patch('app.utils.SchemeFileManager.get_json')
+    @patch('app.utils.SchemeFileManager.set_json')
+    def test_create_scheme_json_invalid_dark_mode(
+        self, mock_set_json, mock_get_json, mock_join, mock_get_config
+    ):
+        """
+        Tests the create_scheme_json method for failure.
+        Case details: Invalid dark mode value provided.
+        """
+        mock_get_config.return_value = 'source.json'
+        mock_join.return_value = 'target.json'
+        mock_get_json.return_value = (
+            json_repair.loads(self.json_source_content)
+        )
+
+        with self.assertRaises(ValueError):
+            with patch.object(self.scheme_creator, 'dark_mode', new=0):
+                self.scheme_creator.create_scheme_json()
+
     @patch('app.utils.DCFileManager.get_config')
     @patch('os.path.join')
     @patch('defusedxml.ElementTree.parse')
     @patch('app.utils.SchemeFileManager.set_xml')
-    def test_create_scheme_xml(
+    def test_create_scheme_xml_success(
         self, mock_set_xml, mock_parse, mock_join, mock_get_config
     ):
         """
-        Tests the create_scheme_xml method.
+        Tests the create_scheme_xml method for success.
         """
         mock_get_config.return_value = 'source.xml'
         mock_join.return_value = 'target.xml'
@@ -262,6 +320,29 @@ class TestScheme(unittest.TestCase):
             self.xml_source_content, mock_set_xml.call_args[0][0],
             self.scheme_xml_tags
         )
+
+    @patch('app.utils.DCFileManager.get_config')
+    @patch('os.path.join')
+    @patch('defusedxml.ElementTree.parse')
+    @patch('app.utils.SchemeFileManager.set_xml')
+    def test_create_scheme_xml_missing_tags(
+        self, mock_set_xml, mock_parse, mock_join, mock_get_config
+    ):
+        """
+        Tests the create_scheme_xml method for failure.
+        Case details: Required tag is missing in the source xml file.
+        """
+        mock_get_config.return_value = 'source.xml'
+        mock_join.return_value = 'target.xml'
+        mock_parse.return_value = (
+            ET.ElementTree(defusedxmlET.fromstring(self.xml_source_content))
+        )
+
+        with self.assertRaises(ValueError):
+            with patch.object(
+                self.scheme_creator, 'xml_tags', new=['TestTag']
+            ):
+                self.scheme_creator.create_scheme_xml()
 
     def assert_xml_equal(self, source_content, target_content, xml_tags):
         """
