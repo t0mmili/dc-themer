@@ -66,9 +66,9 @@ class TestScheme(unittest.TestCase):
             os.path.abspath(self.asset_default_config_path)
         )
 
-    def test_get_config(self):
+    def test_get_config_success(self):
         """
-        Tests the get_config method.
+        Tests the get_config method for success.
         """
         dc_config_path = (
             self.dc_file_manager.get_config(self.dc_config_path_test)
@@ -80,10 +80,21 @@ class TestScheme(unittest.TestCase):
             os.path.expandvars(self.dc_config_path_test)
         )
 
-    @patch('shutil.copy')
-    def test_backup_config(self, mock_copy):
+    @patch('os.path.exists')
+    def test_get_config_file_not_found(self, mock_exists):
         """
-        Tests the backup_config method.
+        Tests the get_config method for failure.
+        Case details: Config file was not found at the specified path.
+        """
+        mock_exists.return_value = False
+
+        with self.assertRaises(FileNotFoundError):
+            self.dc_file_manager.get_config(self.dc_config_path_test)
+
+    @patch('shutil.copy')
+    def test_backup_config_success(self, mock_copy):
+        """
+        Tests the backup_config method for success.
         """
         mock_copy.return_value = None
 
@@ -92,9 +103,20 @@ class TestScheme(unittest.TestCase):
         # Check that mock was called once with specific arguments
         mock_copy.assert_called_once_with('source.xml', 'source.xml.backup')
 
-    def test_get_cfg(self):
+    @patch('shutil.copy')
+    def test_backup_config_copy_error(self, mock_copy):
         """
-        Tests the get_cfg method.
+        Tests the backup_config method for failure.
+        Case details: Error occurred during the copy operation.
+        """
+        mock_copy.side_effect = OSError()
+
+        with self.assertRaises(OSError):
+            self.dc_file_manager.backup_config('source.xml')
+
+    def test_get_cfg_success(self):
+        """
+        Tests the get_cfg method for success.
         """
         # Mock source cfg file
         cfg_source_file = io.StringIO(self.cfg_source_content)
@@ -112,24 +134,46 @@ class TestScheme(unittest.TestCase):
             True if validator_result is True else False, validator_result
         )
 
-    @patch('builtins.open', new_callable=mock_open)
-    def test_set_cfg(self, mock_open):
+    def test_get_cfg_invalid_config(self):
         """
-        Tests the set_cfg method.
+        Tests the get_cfg method for failure.
+        Case details: Config file contains invalid values.
+        """
+        # Mock source cfg file
+        cfg_source_file = io.StringIO('TestKey: TestValue')
+
+        with self.assertRaises(configobj.ConfigObjError):
+            self.scheme_file_manager.get_cfg(cfg_source_file)
+
+    @patch('builtins.open', new_callable=mock_open)
+    def test_set_cfg_success(self, mock_open):
+        """
+        Tests the set_cfg method for success.
         """
         mock_open.read_data = self.cfg_source_content
 
-        self.scheme_file_manager.set_cfg(
-            self.scheme_file_manager.get_cfg('source.cfg'), 'target.cfg'
-        )
+        self.scheme_file_manager.set_cfg(configobj.ConfigObj(), 'target.cfg')
 
         # Check that open was called with specific arguments
         mock_open.assert_called_with('target.cfg', 'w', encoding='utf-8')
 
     @patch('builtins.open', new_callable=mock_open)
-    def test_get_json(self, mock_open):
+    def test_set_cfg_failed_write(self, mock_open):
         """
-        Tests the get_json method.
+        Tests the set_cfg method for failure.
+        Case details: Writing to file raised an exception.
+        """
+        mock_open.side_effect = OSError()
+
+        with self.assertRaises(OSError):
+            self.scheme_file_manager.set_cfg(
+                configobj.ConfigObj(), 'target.cfg'
+            )
+
+    @patch('builtins.open', new_callable=mock_open)
+    def test_get_json_success(self, mock_open):
+        """
+        Tests the get_json method for success.
         """
         mock_open.return_value.read.return_value = self.json_source_content
 
@@ -139,9 +183,20 @@ class TestScheme(unittest.TestCase):
         jsonschema.validate(config, json.loads(self.json_source_schema))
 
     @patch('builtins.open', new_callable=mock_open)
-    def test_set_json(self, mock_open):
+    def test_get_json_type_error(self, mock_open):
         """
-        Tests the set_json method.
+        Tests the get_json method for failure.
+        Case details: Config file does not contain data of the correct type.
+        """
+        mock_open.return_value.read.return_value = str([])
+
+        with self.assertRaises(TypeError):
+            self.scheme_file_manager.get_json('source.json')
+
+    @patch('builtins.open', new_callable=mock_open)
+    def test_set_json_success(self, mock_open):
+        """
+        Tests the set_json method for success.
         """
         mock_open.return_value.read.return_value = self.json_source_content
 
@@ -153,9 +208,20 @@ class TestScheme(unittest.TestCase):
         mock_open.assert_called_with('target.json', 'w', encoding='utf-8')
 
     @patch('builtins.open', new_callable=mock_open)
-    def test_set_xml(self, mock_open):
+    def test_set_json_failed_write(self, mock_open):
         """
-        Tests the set_xml method.
+        Tests the set_json method for failure.
+        Case details: Writing to file raised an exception.
+        """
+        mock_open.side_effect = OSError()
+
+        with self.assertRaises(OSError):
+            self.scheme_file_manager.set_json({}, 'target.json')
+
+    @patch('builtins.open', new_callable=mock_open)
+    def test_set_xml_success(self, mock_open):
+        """
+        Tests the set_xml method for success.
         """
         self.scheme_file_manager.set_xml(
             self.xml_source_content.encode('utf-8'), 'target.xml'
@@ -163,6 +229,17 @@ class TestScheme(unittest.TestCase):
 
         # Check that open was called with specific arguments
         mock_open.assert_called_with('target.xml', 'wb')
+
+    @patch('builtins.open', new_callable=mock_open)
+    def test_set_xml_failed_write(self, mock_open):
+        """
+        Tests the set_xml method for failure.
+        Case details: Writing to file raised an exception.
+        """
+        mock_open.side_effect = OSError()
+
+        with self.assertRaises(OSError):
+            self.scheme_file_manager.set_xml(''.encode('utf-8'), 'target.xml')
 
     @patch('os.listdir')
     @patch('os.path.exists')
