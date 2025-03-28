@@ -5,7 +5,9 @@ import json
 import configobj
 import json_repair
 import tkinter as tk
+from io import StringIO
 from typing import Union
+from json import JSONDecodeError
 
 class AppUtils:
     """
@@ -105,7 +107,7 @@ class SchemeFileManager:
     json, xml).
     """
     @staticmethod
-    def get_cfg(infile: str) -> configobj.ConfigObj:
+    def get_cfg(infile: str | StringIO) -> configobj.ConfigObj:
         """
         Reads a cfg configuration file and returns its contents as a ConfigObj.
 
@@ -162,25 +164,33 @@ class SchemeFileManager:
 
         Raises:
             OSError: If an error occurs while reading the file.
-            TypeError: If file does not contain valid json object data.
+            JSONDecodeError: If json contains invalid data.
+            TypeError: If json object has an invalid type.
         """
         try:
             with open(infile, 'r', encoding='utf-8') as json_file:
                 file_content = json_file.read()
-            json_data = json_repair.loads(file_content)
-
-            # Ensure json_data is a dictionary
-            if not isinstance(json_data, dict):
-                raise TypeError(
-                    'The configuration file {infile} does not contain valid '
-                    'json object data.'
-                )
- 
-            return json_data
-        except Exception as e:
+        except OSError as e:
             raise OSError(
-                f'Failed to read configuration.\n\n{str(e)}'
+                f'Failed to read configuration file {infile}.\n\n{e}'
             ) from e
+
+        try:
+            json_data = json_repair.loads(file_content)
+        except JSONDecodeError as e:
+            raise JSONDecodeError(
+                f'The configuration file {infile} contains invalid json '
+                f'data.\n\n{e}', e.doc, e.pos
+            ) from e
+
+        # Ensure json_data is a dictionary
+        if not isinstance(json_data, dict):
+            raise TypeError(
+                f'The configuration file {infile} contains '
+                f'{type(json_data).__name__} instead of valid json object.'
+            )
+ 
+        return json_data
 
     @staticmethod
     def set_json(json_data: dict, outfile: str) -> None:

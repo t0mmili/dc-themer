@@ -106,6 +106,15 @@ class Scheme:
         source_config: dict = SchemeFileManager.get_json(source_file)
         target_config: dict = SchemeFileManager.get_json(target_file)
 
+        required_keys: list[str] = ["Styles", "FileColors"]
+
+        for item in required_keys:
+            if item not in source_config:
+                raise KeyError(
+                    f'Key \'{item}\' does not exist in the source json '
+                    'configuration data.'
+                )
+
         # Backup current configuration
         if self.dc_configs_backup:
             DCFileManager.backup_config(target_file)
@@ -303,12 +312,12 @@ class SchemeCreator:
             case 2:
                 target_config['Styles'] = [
                     style for style in source_config['Styles']
-                        if style['Name'] == "Dark"
+                        if style['Name'] == 'Dark'
                 ]
             case 3:
                 target_config['Styles'] = [
                     style for style in source_config['Styles']
-                        if style['Name'] == "Light"
+                        if style['Name'] == 'Light'
                 ]
             case _:
                 raise ValueError(f'Invalid dark mode value: {self.dark_mode}')

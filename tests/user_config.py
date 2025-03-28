@@ -1,8 +1,8 @@
 import os
 import sys
 import unittest
-from unittest.mock import call, mock_open, patch
-import json
+from unittest.mock import mock_open, patch
+import jsonschema
 
 # Append the parent directory to the system path to access app module
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -19,68 +19,91 @@ class TestUserConfigManager(unittest.TestCase):
         """
         Initializes the UserConfigManager class with test data.
         """
+        cls.user_config_default = test_data.USER_CONFIG_DEFAULT
+        cls.user_config_path = test_data.USER_CONFIG_PATH
+
         cls.user_config = user_config.UserConfigManager(
-            test_data.USER_CONFIG_DEFAULT, test_data.USER_CONFIG_PATH
+            cls.user_config_default, cls.user_config_path
         )
 
-    def setUp(self):
-        """
-        Creates the test configuration file.
-        """
-        with open(
-            test_data.USER_CONFIG_PATH, 'w', encoding='utf-8'
-        ) as json_file:
-            json.dump(
-                test_data.USER_CONFIG_DEFAULT, json_file, ensure_ascii=False,
-                indent=2
-            )
+        cls.config_ver_current = test_data.CONFIG_VERSION_CURRENT
+        cls.config_ver_read_fail = test_data.CONFIG_VERSION_READ_FAIL
+        cls.config_ver_read_success = test_data.CONFIG_VERSION_READ_SUCCESS
+        cls.user_config_schema = test_data.USER_CONFIG_SCHEMA
 
-    def tearDown(self):
-        """
-        Removes the test configuration file.
-        """
-        if os.path.exists(test_data.USER_CONFIG_PATH):
-            os.remove(test_data.USER_CONFIG_PATH)
-
-    def test_exists(self):
+    @patch('os.path.isfile')
+    def test_exists(self, mock_isfile):
         """
         Tests the exists method.
         """
-        self.assertTrue(
-            self.user_config.exists(),
-            "DC Themer configuration file does not exist."
-        )
+        mock_isfile.return_value = True
+
+        self.assertTrue(self.user_config.exists())
 
     @patch('builtins.open', new_callable=mock_open)
-    def test_create_default(self, mock_open):
+    def test_create_default_success(self, mock_open):
         """
-        Tests the create_default method.
+        Tests the create_default method for success.
         """
         self.user_config.create_default()
 
         # Check that open was called with specific arguments
-        mock_open.assert_has_calls([
-            call(test_data.USER_CONFIG_PATH, 'w', encoding='utf-8')
-        ])
-
-    def test_get_config(self):
-        """
-        Tests the get_config method.
-        """
-        self.assertDictEqual(
-            self.user_config.get_config(
-                test_data.USER_CONFIG_PATH
-            ),
-            test_data.USER_CONFIG_DEFAULT
+        mock_open.assert_called_with(
+            self.user_config_path, 'w', encoding='utf-8'
         )
 
-    def test_verify(self):
+    @patch('builtins.open', new_callable=mock_open)
+    def test_create_default_failed_write(self, mock_open):
         """
-        Tests the verify method.
+        Tests the create_default method for failure.
+        Case details: Writing to file raised an exception.
+        """
+        mock_open.side_effect = OSError()
+
+        with self.assertRaises(OSError):
+            self.user_config.create_default()
+
+    @patch('builtins.open', new_callable=mock_open)
+    def test_get_config_success(self, mock_open):
+        """
+        Tests the get_config method for success.
+        """
+        mock_open.return_value.read.return_value = str(
+            self.user_config_default
+        )
+
+        user_config = self.user_config.get_config(self.user_config_path)
+
+        # Validate user config against json schema
+        jsonschema.validate(user_config, self.user_config_schema)
+
+    @patch('builtins.open', new_callable=mock_open)
+    def test_get_config_type_error(self, mock_open):
+        """
+        Tests the get_config method for failure.
+        Case details: Config file does not contain data of the correct type.
+        """
+        mock_open.return_value.read.return_value = str([])
+
+        with self.assertRaises(TypeError):
+            self.user_config.get_config(self.user_config_path)
+
+    def test_verify_success(self):
+        """
+        Tests the verify method for success.
+        """
+        self.user_config.verify(
+            self.config_ver_current, self.config_ver_read_success
+        )
+
+    def test_verify_version_mismatch(self):
+        """
+        Tests the verify method for failure.
+        Case details: Config's read and current version mismatch.
         """
         with self.assertRaises(RuntimeError):
             self.user_config.verify(
-                test_data.CONFIG_CURRENT_VERSION, test_data.CONFIG_READ_VERSION
+                self.config_ver_current, self.config_ver_read_fail
             )
 
 if __name__ == '__main__':

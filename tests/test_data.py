@@ -1,7 +1,5 @@
 # Misc
 ASSET_PATH = 'assets\\default-user-config.json'
-DARK_MODE = False
-DC_BACKUP_CONFIGS = False
 DC_CONFIG_PATHS = {
     "cfg": "doublecmd.cfg",
     "json": "colors.json",
@@ -16,8 +14,9 @@ SCHEME_XML_TAGS = [
 ]
 
 # User config
-CONFIG_CURRENT_VERSION = 2
-CONFIG_READ_VERSION = 1
+CONFIG_VERSION_CURRENT = 2
+CONFIG_VERSION_READ_FAIL = 1
+CONFIG_VERSION_READ_SUCCESS = 2
 USER_CONFIG_DEFAULT = {
     "configVersion": 1,
     "doubleCommander": {
@@ -42,11 +41,54 @@ USER_CONFIG_DEFAULT = {
     }
 }
 USER_CONFIG_PATH = 'dc-themer-test.json'
+USER_CONFIG_SCHEMA = {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "configVersion": {
+            "type": "integer",
+            "minimum": 1
+        },
+        "doubleCommander": {
+            "type": "object",
+            "properties": {
+                "backupConfigs": {
+                    "type": "boolean"
+                },
+                "configPaths": {
+                    "type": "object",
+                    "properties": {
+                        "cfg": { "type": "string" },
+                        "json": { "type": "string" },
+                        "xml": { "type": "string" }
+                    },
+                    "required": ["cfg", "json", "xml"]
+                }
+            },
+            "required": ["backupConfigs", "configPaths"]
+        },
+        "schemes": {
+            "type": "object",
+            "properties": {
+                "extensions": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                },
+                "path": { "type": "string" },
+                "xmlTags": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                }
+            },
+            "required": ["extensions", "path", "xmlTags"]
+        }
+    },
+    "required": ["configVersion", "doubleCommander", "schemes"]
+}
 
 # DC configs
 DC_CONFIG_CFG_MOCK = {
     "cfgSource": {
-        "name": "doublecmd-test-1.cfg",
         "content": "SplashForm=-1\n"
           "DarkMode=2\n",
         "schema": """SplashForm = integer
@@ -54,14 +96,12 @@ DarkMode = integer
 """
     },
     "cfgTarget": {
-        "name": "doublecmd-test-2.cfg",
         "content": "SplashForm=-1\n"
             "DarkMode=3\n"
     }
 }
 DC_CONFIG_JSON_MOCK = {
     "jsonSource": {
-        "name": "colors-test-1.json",
         "content": """{
   Styles : [
     {
@@ -149,7 +189,6 @@ DC_CONFIG_JSON_MOCK = {
 }"""
     },
     "jsonTarget": {
-        "name": "colors-test-2.json",
         "content": """{
   Styles : [
     {
@@ -168,7 +207,6 @@ DC_CONFIG_JSON_MOCK = {
 }
 DC_CONFIG_XML_MOCK = {
     "xmlSource": {
-        "name": "doublecmd-test-1.xml",
         "content": """<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd DCVersion="1.1.16 gamma" ConfigVersion="15">
   <Fonts>
@@ -183,11 +221,9 @@ DC_CONFIG_XML_MOCK = {
     <UseCursorBorder>True</UseCursorBorder>
     <UseFrameCursor>False</UseFrameCursor>
   </Colors>
-</doublecmd>""",
-        "version": "15"
+</doublecmd>"""
     },
     "xmlTarget": {
-        "name": "doublecmd-test-2.xml",
         "content": """<?xml version="1.0" encoding="UTF-8"?>
 <doublecmd DCVersion="1.0.11 beta" ConfigVersion="14">
   <Fonts>
@@ -203,7 +239,6 @@ DC_CONFIG_XML_MOCK = {
     <UseFrameCursor>True</UseFrameCursor>
   </Colors>
 </doublecmd>
-""",
-        "version": "14"
+"""
     }
 }

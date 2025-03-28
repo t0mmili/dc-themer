@@ -1,10 +1,12 @@
+import io
 import os
 import sys
 import unittest
 from unittest.mock import patch
-import tkinter.messagebox as messagebox
 import configobj
+import json_repair
 import defusedxml.ElementTree as defusedxmlET
+import xml.etree.ElementTree as ET
 
 # Append the parent directory to the system path to access app module
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -21,249 +23,337 @@ class TestScheme(unittest.TestCase):
         """
         Initializes the Scheme class with test data.
         """
+        cls.scheme_xml_tags = test_data.SCHEME_XML_TAGS
+
         cls.scheme = scheme.Scheme(
             test_data.SCHEME_NAME, test_data.SCHEME_PATH,
-            test_data.DC_CONFIG_PATHS, test_data.DC_BACKUP_CONFIGS,
-            test_data.DARK_MODE, test_data.SCHEME_XML_TAGS
+            test_data.DC_CONFIG_PATHS, False, False, cls.scheme_xml_tags
         )
         cls.scheme_creator = scheme.SchemeCreator(
             test_data.SCHEME_NAME, test_data.SCHEME_PATH,
             test_data.DC_CONFIG_PATHS['cfg'],
             test_data.DC_CONFIG_PATHS['json'],
-            test_data.DC_CONFIG_PATHS['xml'], 2, test_data.SCHEME_XML_TAGS
+            test_data.DC_CONFIG_PATHS['xml'], 0, cls.scheme_xml_tags
+        )
+        
+        cls.cfg_source_content = (
+            test_data.DC_CONFIG_CFG_MOCK['cfgSource']['content']
+        )
+        cls.cfg_target_content = (
+            test_data.DC_CONFIG_CFG_MOCK['cfgTarget']['content']
+        )
+        cls.json_source_content = (
+            test_data.DC_CONFIG_JSON_MOCK['jsonSource']['content']
+        )
+        cls.json_target_content = (
+            test_data.DC_CONFIG_JSON_MOCK['jsonTarget']['content']
+        )
+        cls.xml_source_content = (
+            test_data.DC_CONFIG_XML_MOCK['xmlSource']['content']
+        )
+        cls.xml_target_content = (
+            test_data.DC_CONFIG_XML_MOCK['xmlTarget']['content']
         )
 
-    def setUp(self):
-        """
-        Creates the test configuration files.
-        """
-        self.create_test_file(test_data.DC_CONFIG_CFG_MOCK['cfgSource'])
-        self.create_test_file(test_data.DC_CONFIG_CFG_MOCK['cfgTarget'])
-        self.create_test_file(test_data.DC_CONFIG_JSON_MOCK['jsonSource'])
-        self.create_test_file(test_data.DC_CONFIG_JSON_MOCK['jsonTarget'])
-        self.create_test_file(test_data.DC_CONFIG_XML_MOCK['xmlSource'])
-        self.create_test_file(test_data.DC_CONFIG_XML_MOCK['xmlTarget'])
-
-    def tearDown(self):
-        """
-        Removes the test configuration file.
-        """
-        self.remove_test_file(test_data.DC_CONFIG_CFG_MOCK['cfgSource'])
-        self.remove_test_file(test_data.DC_CONFIG_CFG_MOCK['cfgTarget'])
-        self.remove_test_file(test_data.DC_CONFIG_JSON_MOCK['jsonSource'])
-        self.remove_test_file(test_data.DC_CONFIG_JSON_MOCK['jsonTarget'])
-        self.remove_test_file(test_data.DC_CONFIG_XML_MOCK['xmlSource'])
-        self.remove_test_file(test_data.DC_CONFIG_XML_MOCK['xmlTarget'])
-
-    def create_test_file(self, config_mock):
-        """
-        Helper method to create a test file.
-        """
-        with open(config_mock['name'], 'w', encoding='utf-8') as file:
-            file.write(config_mock['content'])
-
-    def remove_test_file(self, config_mock):
-        """
-        Helper method to remove a test file.
-        """
-        if os.path.exists(config_mock['name']):
-            os.remove(config_mock['name'])
-
-    @patch('app.utils.DCFileManager.get_config')
     @patch('os.path.join')
-    def test_apply_scheme_cfg(self, mock_join, mock_get_config):
+    @patch('app.utils.DCFileManager.get_config')
+    @patch('app.utils.SchemeFileManager.get_cfg')
+    @patch('app.utils.SchemeFileManager.set_cfg')
+    def test_apply_scheme_cfg_source_target(
+        self, mock_set_cfg, mock_get_cfg, mock_get_config, mock_join
+    ):
         """
-        Tests the apply_scheme_cfg method.
+        Tests the apply_scheme_cfg method for success.
+        Case details: Set target DarkMode based on source value.
         """
-        # Mock the return values for the dependent methods
-        self.setup_mock_methods_apply(
-            mock_join, mock_get_config, test_data.DC_CONFIG_CFG_MOCK, 'cfg'
+        mock_join.return_value = 'source.cfg'
+        mock_get_config.return_value = 'target.cfg'
+        mock_get_cfg.side_effect = lambda path: configobj.ConfigObj(
+            io.StringIO(
+                self.cfg_source_content if 'source' in path else
+                self.cfg_target_content
+            )
         )
 
         self.scheme.apply_scheme_cfg()
 
-        # Check that changes were applied correctly
-        self.assert_config_files_equal(
-            scheme.SchemeFileManager.get_cfg, test_data.DC_CONFIG_CFG_MOCK,
-            'cfg'
+        # Check that source 'DarkMode' value was applied correctly to target
+        self.assertEqual(
+            mock_get_cfg('source')['DarkMode'],
+            mock_set_cfg.call_args[0][0]['DarkMode']
         )
 
-    @patch('app.utils.DCFileManager.get_config')
     @patch('os.path.join')
-    def test_apply_scheme_json(self, mock_join, mock_get_config):
+    @patch('app.utils.DCFileManager.get_config')
+    @patch('app.utils.SchemeFileManager.get_cfg')
+    @patch('app.utils.SchemeFileManager.set_cfg')
+    def test_apply_scheme_cfg_auto_dark_mode(
+        self, mock_set_cfg, mock_get_cfg, mock_get_config, mock_join
+    ):
         """
-        Tests the apply_scheme_json method.
+        Tests the apply_scheme_cfg method for success.
+        Case details: Set target DarkMode to auto.
         """
-        # Mock the return values for the dependent methods
-        self.setup_mock_methods_apply(
-            mock_join, mock_get_config, test_data.DC_CONFIG_JSON_MOCK, 'json'
+        mock_join.return_value = 'source.cfg'
+        mock_get_config.return_value = 'target.cfg'
+        mock_get_cfg.side_effect = lambda path: configobj.ConfigObj(
+            io.StringIO(
+                self.cfg_source_content if 'source' in path else
+                self.cfg_target_content
+            )
+        )
+
+        with patch.object(self.scheme, 'auto_dark_mode', new=True):
+            self.scheme.apply_scheme_cfg()
+
+        # Check that target has 'DarkMode' value set to auto
+        self.assertEqual(mock_set_cfg.call_args[0][0]['DarkMode'], '1')
+
+    @patch('os.path.join')
+    @patch('app.utils.DCFileManager.get_config')
+    @patch('app.utils.SchemeFileManager.get_json')
+    @patch('app.utils.SchemeFileManager.set_json')
+    def test_apply_scheme_json_success(
+        self, mock_set_json, mock_get_json, mock_get_config, mock_join
+    ):
+        """
+        Tests the apply_scheme_json method for success.
+        """
+        mock_join.return_value = 'source.json'
+        mock_get_config.return_value = 'target.json'
+        mock_get_json.side_effect = lambda path: json_repair.loads(
+            self.json_source_content if 'source' in path else
+            self.json_target_content
         )
 
         self.scheme.apply_scheme_json()
 
-        # Check that changes were applied correctly
-        self.assert_config_files_equal(
-            scheme.SchemeFileManager.get_json, test_data.DC_CONFIG_JSON_MOCK,
-            'json'
+        # Check that source was applied correctly to target
+        self.assertEqual(
+            mock_get_json('source'), mock_set_json.call_args[0][0]
         )
 
-    @patch('app.utils.DCFileManager.get_config')
     @patch('os.path.join')
-    def test_apply_scheme_xml(self, mock_join, mock_get_config):
+    @patch('app.utils.DCFileManager.get_config')
+    @patch('app.utils.SchemeFileManager.get_json')
+    @patch('app.utils.SchemeFileManager.set_json')
+    def test_apply_scheme_json_missing_key(
+        self, mock_set_json, mock_get_json, mock_get_config, mock_join
+    ):
         """
-        Tests the apply_scheme_xml method.
+        Tests the apply_scheme_json method for failure.
+        Case details: Required keys are missing in the source json file.
         """
-        # Mock the return values for the dependent methods
-        self.setup_mock_methods_apply(
-            mock_join, mock_get_config, test_data.DC_CONFIG_XML_MOCK, 'xml'
+        mock_join.return_value = 'source.json'
+        mock_get_config.return_value = 'target.json'
+        mock_get_json.side_effect = lambda path: json_repair.loads(
+            '{}' if 'source' in path else self.json_target_content
+        )
+
+        with self.assertRaises(KeyError):
+            self.scheme.apply_scheme_json()
+
+    @patch('os.path.join')
+    @patch('app.utils.DCFileManager.get_config')
+    @patch('defusedxml.ElementTree.parse')
+    @patch('app.utils.SchemeFileManager.set_xml')
+    def test_apply_scheme_xml_success(
+        self, mock_set_xml, mock_parse, mock_get_config, mock_join
+    ):
+        """
+        Tests the apply_scheme_xml method for success.
+        """
+        mock_join.return_value = 'source.xml'
+        mock_get_config.return_value = 'target.xml'
+        mock_parse.side_effect = lambda path: ET.ElementTree(
+            defusedxmlET.fromstring(
+                self.xml_source_content if 'source' in path else
+                self.xml_target_content
+            )
         )
 
         self.scheme.apply_scheme_xml()
 
-        # Check that changes were applied correctly
-        self.assert_xml_files_equal(
-            test_data.DC_CONFIG_XML_MOCK, test_data.SCHEME_XML_TAGS
+        # Check that source was applied correctly to target
+        self.assert_xml_equal(
+            self.xml_source_content, mock_set_xml.call_args[0][0],
+            self.scheme_xml_tags
         )
 
-    @patch('tkinter.messagebox._show')
-    @patch('app.utils.DCFileManager.get_config')
     @patch('os.path.join')
+    @patch('app.utils.DCFileManager.get_config')
+    @patch('defusedxml.ElementTree.parse')
+    @patch('app.utils.SchemeFileManager.set_xml')
+    def test_apply_scheme_xml_missing_tags(
+        self, mock_set_xml, mock_parse, mock_get_config, mock_join
+    ):
+        """
+        Tests the apply_scheme_xml method for failure.
+        Case details: Required tag is missing in the source xml file.
+        """
+        mock_join.return_value = 'source.xml'
+        mock_get_config.return_value = 'target.xml'
+        mock_parse.side_effect = lambda path: ET.ElementTree(
+            defusedxmlET.fromstring(
+                self.xml_source_content if 'source' in path else
+                self.xml_target_content
+            )
+        )
+
+        with self.assertRaises(ValueError):
+            with patch.object(self.scheme, 'xml_tags', new=['TestTag']):
+                self.scheme.apply_scheme_xml()
+
+
+    @patch('os.path.join')
+    @patch('app.utils.DCFileManager.get_config')
+    @patch('defusedxml.ElementTree.parse')
+    @patch('tkinter.messagebox._show')
     def test_verify_scheme_version_xml(
-            self, mock_join, mock_get_config, mock_show
-        ):
+        self, mock_show, mock_parse, mock_get_config, mock_join
+    ):
         """
         Tests the verify_scheme_version_xml method.
         """
-        # Mock the return values for the dependent methods
-        self.setup_mock_methods_apply(
-            mock_join, mock_get_config, test_data.DC_CONFIG_XML_MOCK, 'xml'
+        mock_join.return_value = 'source.xml'
+        mock_get_config.return_value = 'target.xml'
+        mock_parse.side_effect = lambda path: ET.ElementTree(
+            defusedxmlET.fromstring(
+                self.xml_source_content if 'source' in path else
+                self.xml_target_content
+            )
         )
 
         self.scheme.verify_scheme_version_xml()
 
-        mock_show.assert_called_once_with(
-            "Warning",
-            (
-                'XML configuration scheme version mismatch:\n\n'
-                'Source scheme: '
-                f'{test_data.DC_CONFIG_XML_MOCK['xmlSource']['version']}\n'
-                'Target scheme: '
-                f'{test_data.DC_CONFIG_XML_MOCK['xmlTarget']['version']}\n\n'
-                'The apply process will continue.\n'
-                'In case of any issues, please verify your configuration '
-                'files.'
-            ),
-            messagebox.WARNING, messagebox.OK
-        )
+        # Check that 'warning' message box was called once
+        mock_show.assert_called_once()
+        self.assertEqual(mock_show.call_args[0][2], 'warning')
 
     @patch('app.utils.DCFileManager.get_config')
     @patch('os.path.join')
-    def test_create_scheme_cfg(self, mock_get_config, mock_join):
+    @patch('app.utils.SchemeFileManager.get_cfg')
+    @patch('app.utils.SchemeFileManager.set_cfg')
+    def test_create_scheme_cfg(
+        self, mock_set_cfg, mock_get_cfg, mock_join, mock_get_config
+    ):
         """
         Tests the create_scheme_cfg method.
         """
-        # Mock the return values for the dependent methods
-        self.setup_mock_methods_create(
-            mock_get_config, mock_join, test_data.DC_CONFIG_CFG_MOCK, 'cfg'
+        mock_get_config.return_value = 'source.cfg'
+        mock_join.return_value = 'target.cfg'
+        mock_get_cfg.return_value = (
+            configobj.ConfigObj(io.StringIO(self.cfg_source_content))
         )
 
         self.scheme_creator.create_scheme_cfg()
 
-        # Check that changes were applied correctly
-        self.assert_config_files_darkmode_equal(
-            scheme.SchemeFileManager.get_cfg, test_data.DC_CONFIG_CFG_MOCK,
-            'cfg'
+        # Check that source 'DarkMode' value was applied correctly to target
+        self.assertEqual(
+            mock_get_cfg()['DarkMode'],
+            mock_set_cfg.call_args[0][0]['DarkMode']
         )
 
     @patch('app.utils.DCFileManager.get_config')
     @patch('os.path.join')
-    def test_create_scheme_json(self, mock_get_config, mock_join):
+    @patch('app.utils.SchemeFileManager.get_json')
+    @patch('app.utils.SchemeFileManager.set_json')
+    def test_create_scheme_json_success(
+        self, mock_set_json, mock_get_json, mock_join, mock_get_config
+    ):
         """
-        Tests the create_scheme_json method.
+        Tests the create_scheme_json method for success.
         """
-        # Mock the return values for the dependent methods
-        self.setup_mock_methods_create(
-            mock_get_config, mock_join, test_data.DC_CONFIG_JSON_MOCK, 'json'
+        mock_get_config.return_value = 'source.json'
+        mock_join.return_value = 'target.json'
+        mock_get_json.return_value = (
+            json_repair.loads(self.json_source_content)
         )
 
-        self.scheme_creator.create_scheme_json()
+        with patch.object(self.scheme_creator, 'dark_mode', new=1):
+            self.scheme_creator.create_scheme_json()
 
-        # Check that changes were applied correctly
-        self.assert_config_files_equal(
-            scheme.SchemeFileManager.get_json, test_data.DC_CONFIG_JSON_MOCK,
-            'json'
-        )
+        # Check that source was applied correctly to target
+        self.assertEqual(mock_get_json(), mock_set_json.call_args[0][0])
 
     @patch('app.utils.DCFileManager.get_config')
     @patch('os.path.join')
-    def test_create_scheme_xml(self, mock_get_config, mock_join):
+    @patch('app.utils.SchemeFileManager.get_json')
+    @patch('app.utils.SchemeFileManager.set_json')
+    def test_create_scheme_json_invalid_dark_mode(
+        self, mock_set_json, mock_get_json, mock_join, mock_get_config
+    ):
         """
-        Tests the create_scheme_xml method.
+        Tests the create_scheme_json method for failure.
+        Case details: Invalid dark mode value provided.
         """
-        # Mock the return values for the dependent methods
-        self.setup_mock_methods_create(
-            mock_get_config, mock_join, test_data.DC_CONFIG_XML_MOCK, 'xml'
+        mock_get_config.return_value = 'source.json'
+        mock_join.return_value = 'target.json'
+        mock_get_json.return_value = (
+            json_repair.loads(self.json_source_content)
+        )
+
+        with self.assertRaises(ValueError):
+            with patch.object(self.scheme_creator, 'dark_mode', new=0):
+                self.scheme_creator.create_scheme_json()
+
+    @patch('app.utils.DCFileManager.get_config')
+    @patch('os.path.join')
+    @patch('defusedxml.ElementTree.parse')
+    @patch('app.utils.SchemeFileManager.set_xml')
+    def test_create_scheme_xml_success(
+        self, mock_set_xml, mock_parse, mock_join, mock_get_config
+    ):
+        """
+        Tests the create_scheme_xml method for success.
+        """
+        mock_get_config.return_value = 'source.xml'
+        mock_join.return_value = 'target.xml'
+        mock_parse.return_value = (
+            ET.ElementTree(defusedxmlET.fromstring(self.xml_source_content))
         )
 
         self.scheme_creator.create_scheme_xml()
 
-        # Check that changes were applied correctly
-        self.assert_xml_files_equal(
-            test_data.DC_CONFIG_XML_MOCK, test_data.SCHEME_XML_TAGS
+        # Check that source was applied correctly to target
+        self.assert_xml_equal(
+            self.xml_source_content, mock_set_xml.call_args[0][0],
+            self.scheme_xml_tags
         )
 
-    def setup_mock_methods_apply(
-            self, mock_join, mock_get_config, config_mock, config_type
-        ):
+    @patch('app.utils.DCFileManager.get_config')
+    @patch('os.path.join')
+    @patch('defusedxml.ElementTree.parse')
+    @patch('app.utils.SchemeFileManager.set_xml')
+    def test_create_scheme_xml_missing_tags(
+        self, mock_set_xml, mock_parse, mock_join, mock_get_config
+    ):
         """
-        Helper method to setup mock methods for apply related tests.
+        Tests the create_scheme_xml method for failure.
+        Case details: Required tag is missing in the source xml file.
         """
-        mock_join.return_value = config_mock[f'{config_type}Source']['name']
-        mock_get_config.return_value = (
-            config_mock[f'{config_type}Target']['name']
+        mock_get_config.return_value = 'source.xml'
+        mock_join.return_value = 'target.xml'
+        mock_parse.return_value = (
+            ET.ElementTree(defusedxmlET.fromstring(self.xml_source_content))
         )
 
-    def setup_mock_methods_create(
-            self, mock_get_config, mock_join, config_mock, config_type
-        ):
-        """
-        Helper method to setup mock methods for create related tests.
-        """
-        mock_get_config.return_value = (
-            config_mock[f'{config_type}Source']['name']
-        )
-        mock_join.return_value = config_mock[f'{config_type}Target']['name']
+        with self.assertRaises(ValueError):
+            with patch.object(
+                self.scheme_creator, 'xml_tags', new=['TestTag']
+            ):
+                self.scheme_creator.create_scheme_xml()
 
-    def assert_config_files_equal(self, get_method, config_mock, config_type):
-        """
-        Helper method to assert that config files are equal.
-        """
-        source_file = get_method(config_mock[f'{config_type}Source']['name'])
-        target_file = get_method(config_mock[f'{config_type}Target']['name'])
-
-        self.assertDictEqual(source_file, target_file)
-
-    def assert_config_files_darkmode_equal(
-            self, get_method, config_mock, config_type
-        ):
-        """
-        Helper method to assert that config files have equal DarkMode key.
-        """
-        source_config: configobj.ConfigObj = (
-            get_method(config_mock[f'{config_type}Source']['name'])
-        )
-        target_config: configobj.ConfigObj = (
-            get_method(config_mock[f'{config_type}Target']['name'])
-        )
-
-        self.assertEqual(source_config['DarkMode'], target_config['DarkMode'])
-
-    def assert_xml_files_equal(self, xml_mock, xml_tags):
+    def assert_xml_equal(self, source_content, target_content, xml_tags):
         """
         Helper method to assert that XML files are equal.
         """
-        source_config = defusedxmlET.parse(xml_mock['xmlSource']['name'])
-        target_config = defusedxmlET.parse(xml_mock['xmlTarget']['name'])
+        source_config = (
+            ET.ElementTree(defusedxmlET.fromstring(source_content))
+        )
+        target_config = (
+            ET.ElementTree(defusedxmlET.fromstring(target_content))
+        )
 
         for item in xml_tags:
             source_tag = source_config.find(f'./{item}')

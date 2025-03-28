@@ -18,9 +18,14 @@
 | Item | Details |
 | --- | --- |
 | Compatibility | Test app on multiply Python versions. |
-| Tech debt | Mock RW files. |
-| Tech debt | Create test data in `setUpClass`. |
+| Improvement | Implement popular test framework, like pytest. |
 
+## Tooling
+
+| Item | Details |
+| --- | --- |
+| UV package manager | Implement. |
+| Dev environment | Move development to Dev Container or Devbox. |
 
 ## CI/CD
 
